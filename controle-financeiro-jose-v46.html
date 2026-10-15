@@ -119,9 +119,33 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 #installments .purchase-amount {font-size:clamp(13px,3.5vw,18px);font-weight:800}
 @media(max-width:440px){#installments .month-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}#installments .month-details{padding:12px}#installments .purchase-row{padding:12px 0}}
 
+
+#cloudGate{position:fixed;inset:0;z-index:9999;background:#08111ff2;display:flex;align-items:center;justify-content:center;padding:18px}
+#cloudGate .cloud-box{width:min(100%,430px);background:#121d2e;border:1px solid #344860;border-radius:18px;padding:22px;box-shadow:0 20px 70px #0008}
+#cloudGate h2{margin:0 0 8px;font-size:21px}#cloudGate p{color:#b9c7d8;font-size:13px}
+#cloudGate label{display:block;font-size:12px;margin:12px 0 5px;color:#b9c7d8}
+#cloudGate input{width:100%;background:#0c1524;color:#edf3fb;border:1px solid #31445c;border-radius:9px;padding:12px}
+#cloudGate button{width:100%;margin-top:12px}#cloudStatus{font-size:12px;color:#f8dfa0;white-space:pre-wrap}
+
 </style>
 </head>
-<body><div class="app">
+<body>
+
+<div id="cloudGate">
+ <div class="cloud-box">
+  <div class="eyebrow">CONTROLE FINANCEIRO</div>
+  <h2>Entrar para sincronizar</h2>
+  <p>Use o e-mail e a senha cadastrados no Supabase. Depois de entrar, os dados serão sincronizados entre celular e computador.</p>
+  <form id="cloudLoginForm">
+   <label for="cloudEmail">E-mail</label><input id="cloudEmail" type="email" autocomplete="username" required>
+   <label for="cloudPassword">Senha</label><input id="cloudPassword" type="password" autocomplete="current-password" required>
+   <button id="cloudLoginBtn" type="submit">Entrar e sincronizar</button>
+  </form>
+  <div id="cloudStatus" role="status" aria-live="polite"></div>
+  <p style="font-size:11px">Os dados locais são mantidos neste navegador. No primeiro acesso, abra primeiro pelo celular, onde estão seus dados mais completos.</p>
+ </div>
+</div>
+<div class="app">
 <header class="top"><div class="brand"><div class="logo">R$</div><div><h1>Controle Financeiro José Luiz</h1></div></div></header>
 <div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span></div>
 <section class="cards">
@@ -162,6 +186,56 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+const FIN_SUPABASE_URL='https://zxdnyadooquqfmfptypae.supabase.co';
+const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
+const cloudGate=$('cloudGate'), cloudStatus=$('cloudStatus'), cloudLoginForm=$('cloudLoginForm');
+function cloudMessage(msg){cloudStatus.textContent=msg}
+async function startCloudSession(session){
+ try{
+  cloudUser=session.user;
+  cloudMessage('Verificando os dados salvos na nuvem…');
+  const {data:remote,error}=await cloudClient.from('financeiro_jose_state').select('state,updated_at').eq('user_id',cloudUser.id).maybeSingle();
+  if(error)throw error;
+  if(!remote){
+   cloudMessage('Primeiro acesso: enviando os dados deste aparelho para a nuvem…');
+   const {error:upErr}=await cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+   if(upErr)throw upErr;
+   localStorage.setItem('finjose_v2',JSON.stringify(state));
+   cloudReady=true;cloudGate.style.display='none';
+   cloudMessage('Sincronização ativada.');return;
+  }
+  const localRaw=localStorage.getItem('finjose_v2');
+  if(localRaw) localStorage.setItem('finjose_v2_before_cloud_'+cloudUser.id,localRaw);
+  if(!remote.state || !Array.isArray(remote.state.incomes) || !Array.isArray(remote.state.expenses))throw new Error('Os dados na nuvem não têm o formato esperado. Os dados locais foram mantidos.');
+  state=remote.state;
+  localStorage.setItem('finjose_v2',JSON.stringify(state));
+  if(!state.history)state.history={};
+  render();
+  cloudReady=true;cloudGate.style.display='none';
+  cloudMessage('Dados da nuvem carregados. A cópia local anterior foi preservada neste navegador.');
+ }catch(e){console.error(e);cloudMessage('Não foi possível sincronizar: '+(e.message||'erro desconhecido')+'. Seus dados locais foram mantidos.');}
+}
+(async function initCloud(){
+ try{
+  if(!window.supabase || !window.supabase.createClient)throw new Error('Não foi possível carregar o serviço de conexão. Verifique a internet e recarregue a página.');
+  cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY);
+  const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
+  if(data.session){await startCloudSession(data.session);}
+  cloudLoginForm.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
+   try{
+    const {data:login,error:loginError}=await cloudClient.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
+    if(loginError)throw loginError;
+    await startCloudSession(login.session);
+   }catch(err){cloudMessage('Não foi possível entrar: '+(err.message||'confira e-mail e senha')+'.');}
+   finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
+  });
+ }catch(e){cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
+})();
+
+</script>
 <script>
 const $=id=>document.getElementById(id), money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
 const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -217,7 +291,16 @@ if(state.month && state.month!==currentMonthKey){
 state.month=currentMonthKey;
 (state.incomes||[]).forEach(x=>{if(x.status==='Previsto')x.status='A receber';});
 (state.expenses||[]).forEach(x=>{if(x.status==='Previsto')x.status='A pagar';});
-function save(){localStorage.setItem('finjose_v2',JSON.stringify(state));render()}
+let cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncBusy=false;
+function save(){
+ localStorage.setItem('finjose_v2',JSON.stringify(state));render();
+ if(cloudReady && cloudClient && cloudUser && !cloudSyncBusy){
+  cloudSyncBusy=true;
+  cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'})
+   .then(({error})=>{if(error){console.error(error);$('cloudStatus').textContent='Alterações salvas neste aparelho, mas a nuvem informou um erro: '+error.message;}})
+   .finally(()=>{cloudSyncBusy=false});
+ }
+}
 
 function isCardExpense(x){let cardNames=['SICREDI - 03','Inter - 07','Nubank','Amazon (Bradesco) - 05','Mercado Pago'];return x.category==='card'||cardNames.some(n=>String(x.name).toLowerCase().startsWith(n.toLowerCase()))}
 function renderPlans(kind){let arr=state[kind],root=$(kind==='incomes'?'incomePlanRows':'expensePlanRows');let isCard=x=>kind==='expenses'&&isCardExpense(x);let main=kind==='expenses'?arr.filter(x=>!isCard(x)):arr;let cards=kind==='expenses'?arr.filter(isCard):[];function rows(items){return items.map(x=>{let opts=kind==='incomes'?['A receber','Recebido']:['A pagar','Pago'];return `<div class="budget-row"><div class="budget-title"><div title="${esc(x.name)}"><strong>${esc(x.name)}</strong></div><input class="amount-edit" aria-label="Valor ${esc(x.name)}" title="Editar valor" type="number" min="0" step=".01" value="${(+x.amount).toFixed(2)}" onchange="editPlan('${kind}','${x.id}',this.value)"><select aria-label="Situação ${esc(x.name)}" class="status-select" onchange="setPlanStatus('${kind}','${x.id}',this.value)">${opts.map(o=>`<option ${x.status===o?'selected':''}>${o}</option>`).join('')}</select><button class="danger remove-row" title="Remover lançamento" onclick="removePlan('${kind}','${x.id}')">×</button></div></div>`}).join('')}root.innerHTML=rows(main);if(kind==='expenses')$('cardExpenseRows').innerHTML=rows(cards)}
