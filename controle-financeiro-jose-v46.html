@@ -131,6 +131,20 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </head>
 <body>
 
+<div id="cloudGate">
+ <div class="cloud-box">
+  <div class="eyebrow">CONTROLE FINANCEIRO</div>
+  <h2>Entrar para sincronizar</h2>
+  <p>Use o e-mail e a senha cadastrados no Supabase. Depois de entrar, os dados serão sincronizados entre celular e computador.</p>
+  <form id="cloudLoginForm">
+   <label for="cloudEmail">E-mail</label><input id="cloudEmail" type="email" autocomplete="username" required>
+   <label for="cloudPassword">Senha</label><input id="cloudPassword" type="password" autocomplete="current-password" required>
+   <button id="cloudLoginBtn" type="submit">Entrar e sincronizar</button>
+  </form>
+  <div id="cloudStatus" role="status" aria-live="polite"></div>
+  <p style="font-size:11px">Os dados locais são mantidos neste navegador. No primeiro acesso, abra primeiro pelo celular, onde estão seus dados mais completos.</p>
+ </div>
+</div>
 <div class="app">
 <header class="top"><div class="brand"><div class="logo">R$</div><div><h1>Controle Financeiro José Luiz</h1></div></div></header>
 <div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span></div>
@@ -172,6 +186,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id), money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
 const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -385,6 +400,73 @@ $('captureShareBtn').addEventListener('click',()=>{
 });
 
 </script>
-
+<script>
+const FIN_SUPABASE_URL='https://zxdnyadoquqfmfptypae.supabase.co';
+const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
+const cloudGate=document.getElementById('cloudGate'), cloudStatus=document.getElementById('cloudStatus'), cloudLoginForm=document.getElementById('cloudLoginForm');
+function cloudMessage(msg){cloudStatus.textContent=msg}
+async function startCloudSession(session){
+ try{
+  cloudUser=session.user;
+  cloudMessage('Verificando os dados salvos na nuvem…');
+  const {data:remote,error}=await cloudClient.from('financeiro_jose_state').select('state,updated_at').eq('user_id',cloudUser.id).maybeSingle();
+  if(error)throw error;
+  if(!remote){
+   cloudMessage('Primeiro acesso: enviando os dados deste aparelho para a nuvem…');
+   const {error:upErr}=await cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+   if(upErr)throw upErr;
+   localStorage.setItem('finjose_v2',JSON.stringify(state));
+   cloudReady=true;cloudGate.style.display='none';
+   cloudMessage('Sincronização ativada.');return;
+  }
+  const localRaw=localStorage.getItem('finjose_v2');
+  if(localRaw) localStorage.setItem('finjose_v2_before_cloud_'+cloudUser.id,localRaw);
+  if(!remote.state || !Array.isArray(remote.state.incomes) || !Array.isArray(remote.state.expenses))throw new Error('Os dados na nuvem não têm o formato esperado. Os dados locais foram mantidos.');
+  state=remote.state;
+  localStorage.setItem('finjose_v2',JSON.stringify(state));
+  if(!state.history)state.history={};
+  render();
+  cloudReady=true;cloudGate.style.display='none';
+  cloudMessage('Dados da nuvem carregados. A cópia local anterior foi preservada neste navegador.');
+ }catch(e){console.error(e);cloudMessage('Não foi possível sincronizar: '+(e.message||'erro desconhecido')+'. Seus dados locais foram mantidos.');}
+}
+async function ensureSupabaseLibrary(){
+ if(window.supabase && window.supabase.createClient)return;
+ await new Promise((resolve,reject)=>{
+  const s=document.createElement('script');
+  s.src='https://unpkg.com/@supabase/supabase-js@2';
+  s.async=true;
+  s.onload=()=>window.supabase&&window.supabase.createClient?resolve():reject(new Error('A biblioteca de conexão não carregou corretamente.'));
+  s.onerror=()=>reject(new Error('Não foi possível carregar a biblioteca Supabase pelos servidores disponíveis. Verifique a internet ou bloqueadores do navegador.'));
+  document.head.appendChild(s);
+ });
+}
+(async function initCloud(){
+ try{
+  await ensureSupabaseLibrary();
+  cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY,{
+   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+  const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
+  if(data.session){await startCloudSession(data.session);}
+  cloudLoginForm.addEventListener('submit',async e=>{
+   e.preventDefault();
+   const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
+   try{
+    const {data:login,error:loginError}=await cloudClient.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
+    if(loginError)throw loginError;
+    await startCloudSession(login.session);
+   }catch(err){
+    console.error('Falha no login Supabase:',err);
+    const msg=String(err.message||'');
+    cloudMessage(msg.toLowerCase().includes('failed to fetch')
+      ? 'O navegador não conseguiu alcançar o Supabase. Confira se a internet está funcionando e tente em uma janela anônima ou desative temporariamente bloqueadores para este site. Seus dados locais foram mantidos.'
+      : 'Não foi possível entrar: '+(msg||'confira e-mail e senha')+'. Seus dados locais foram mantidos.');
+   }
+   finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
+  });
+ }catch(e){cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
+})();
+</script>
 </body></html>
 
