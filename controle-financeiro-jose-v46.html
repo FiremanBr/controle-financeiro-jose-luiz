@@ -127,7 +127,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 #cloudGate input{width:100%;background:#0c1524;color:#edf3fb;border:1px solid #31445c;border-radius:9px;padding:12px}
 #cloudGate button{width:100%;margin-top:12px}#cloudStatus{font-size:12px;color:#f8dfa0;white-space:pre-wrap}
 
- .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.bulk-status{padding:8px 10px;font-size:11px;white-space:nowrap}.section-actions>button{flex-shrink:0}@media(max-width:520px){.section-actions{gap:5px}.bulk-status{padding:7px 8px;font-size:10px}.section-actions .add-income,.section-actions .add-expense,.section-actions .add-card{padding:9px 10px;font-size:12px}}
+ .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:nowrap;min-width:0}.section-actions .bulk-status{padding:8px 10px;font-size:11px;white-space:nowrap}.section-actions>button{flex-shrink:0}.section-actions .add-card{display:inline-block;width:auto;min-width:0;margin-top:0;padding:8px 11px;font-size:12px;white-space:nowrap}@media(max-width:520px){.section-actions{gap:5px}.section-actions .bulk-status{padding:7px 7px;font-size:10px}.section-actions .add-income,.section-actions .add-expense{padding:9px 10px;font-size:12px}.section-actions .add-card{padding:7px 8px;font-size:11px}}
 </style>
 </head>
 <body>
@@ -162,7 +162,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <section class="panel"><div class="panel-head"><div><h2 id="yearMovementTitle">Movimentação 2026</h2><div class="sub">Previsão mensal dos lançamentos recorrentes</div></div></div><div class="chart" id="chart"></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Entradas</span><span><i class="dot" style="background:var(--red)"></i>Saídas</span></div></section>
 <section class="panel"><div class="panel-head"><div><h2 class="income-title">Receitas previstas</h2><div class="sub">Previsibilidade do que deve entrar</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkIncomeBtn" type="button" title="Alternar o status de todas as receitas">⇄ Todos os status</button><button class="add-income" id="addIncomeBtn">＋ Receita</button></div></div><div id="incomePlanRows"></div>
 <div class="panel-head" style="margin-top:16px"><div><h2 class="fixed-title">Despesas fixas</h2><div class="sub">Contas fixas e débitos</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkExpenseBtn" type="button" title="Alternar o status de todas as despesas fixas">⇄ Todos os status</button><button class="add-expense" id="addExpenseBtn">＋ Despesa</button></div></div><div id="expensePlanRows"></div>
-<div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas com cartões</h2></div><div class="section-actions"><button class="secondary bulk-status" id="bulkCardBtn" type="button" title="Alternar o status de todas as despesas com cartões">⇄ Todos os status</button><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div></div><div id="cardExpenseRows"></div></div>
+<div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas Cartões</h2></div><div class="section-actions"><button class="secondary bulk-status" id="bulkCardBtn" type="button" title="Alternar o status de todas as despesas com cartões">⇄ Todos os status</button><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div></div><div id="cardExpenseRows"></div></div>
 </section></div>
 <div id="shareCapture"><nav class="nav"><button class="active cards-tab" data-tab="cards">Cartão Sicredi</button><button class="secondary" data-tab="installments">Parcelas</button><button class="secondary" data-tab="settings">Dados e backup</button></nav>
 
@@ -329,13 +329,14 @@ function renderChart(){
 }
 function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;const setText=(id,value)=>{const el=$(id);if(el)el.textContent=value};setText('receivableMetric',money(receivable));setText('incomeMetric',money(got));setText('fixedExpensesMetric',money(fixedExpenses));setText('cardExpensesMetric',money(cardExpenses));setText('totalExpensesMetric',money(totalExpenses));setText('balanceMetric',money(got-paid));setText('balanceIncomeDetail',money(got));setText('balanceExpenseDetail',money(paid));const balance=$('balanceMetric');if(balance){balance.classList.toggle('negative',got-paid<0);balance.className='metric '+(got>=paid?'positive':'negative')}setText('openMetric',money(state.incomes.filter(x=>x.status==='A receber'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)+state.expenses.filter(x=>x.status==='A pagar'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)))}
 $('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;function bulkSetStatus(kind){
- const arr=state[kind];
- const isCard=x=>kind==='expenses'&&isCardExpense(x);
- const targets=kind==='incomes'?arr:(kind==='expenses'?arr.filter(x=>!isCard(x)):arr.filter(isCard));
+ const source=kind==='cards'?'expenses':kind;
+ const arr=state[source]||[];
+ const isCard=x=>source==='expenses'&&isCardExpense(x);
+ const targets=source==='incomes'?arr:(kind==='expenses'?arr.filter(x=>!isCard(x)):arr.filter(isCard));
  if(!targets.length){alert('Não há lançamentos nesta seção para alterar.');return}
  const done=kind==='incomes'?'Recebido':'Pago',open=kind==='incomes'?'A receber':'A pagar';
  const next=targets.every(x=>x.status===done)?open:done;
- const label=kind==='incomes'?'receitas':(kind==='expenses'?'despesas fixas':'despesas com cartões');
+ const label=kind==='incomes'?'receitas':(kind==='expenses'?'despesas fixas':'despesas cartões');
  if(!confirm('Deseja alterar o status de todos os itens de '+label+' para "'+next+'"? Os status individuais serão substituídos.'))return;
  targets.forEach(x=>x.status=next);save();
 }
