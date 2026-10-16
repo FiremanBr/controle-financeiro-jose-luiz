@@ -248,7 +248,7 @@ function save(){
  if(cloudReady && cloudClient && cloudUser && !cloudSyncBusy){
   cloudSyncBusy=true;
   cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'})
-   .then(({error})=>{if(error){console.error(error);if($('cloudStatus'))$('cloudStatus').textContent='Alterações salvas neste aparelho, mas a nuvem informou um erro: '+error.message;}})
+   .then(({error})=>{if(error){console.error(error);cloudMessage('Alterações salvas neste aparelho, mas a nuvem informou um erro: '+error.message);}})
    .finally(()=>{cloudSyncBusy=false});
  }
 }
@@ -404,7 +404,7 @@ $('captureShareBtn').addEventListener('click',()=>{
 const FIN_SUPABASE_URL='https://zxdnyadoouqfmfptypae.supabase.co';
 const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
 const cloudGate=document.getElementById('cloudGate'), cloudStatus=document.getElementById('cloudStatus'), cloudLoginForm=document.getElementById('cloudLoginForm');
-function cloudMessage(msg){if(cloudStatus){cloudStatus.textContent=msg}else{console.warn('Status de sincronização:',msg)}}
+function cloudMessage(msg){const el=document.getElementById('cloudStatus');if(el){el.textContent=String(msg??'');}else{console.warn('Status de sincronização:',msg)}}
 async function startCloudSession(session){
  try{
   cloudUser=session.user;
