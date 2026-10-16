@@ -33,7 +33,7 @@
 .month-track{height:8px;border-radius:99px;background:var(--line);overflow:hidden;width:100%}
 .month-bar{display:block;height:100%;border-radius:99px;min-width:0}
 .income-bar{background:linear-gradient(90deg,#39d6a0,#218f75)}
-.expense-bar{background:linear-gradient(90deg,#ff3030,#d60000)}.account-bar{background:linear-gradient(90deg,#70a7ff,#4776d0)}.account-balance-chart{margin-top:9px}.account-balance-chart .month-values{margin-bottom:5px}.account-balance-chart strong{color:var(--blue);font-variant-numeric:tabular-nums}
+.expense-bar{background:linear-gradient(90deg,#ff3030,#d60000)}
 .month-values{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
 .empty-chart{padding:20px 8px;text-align:center;color:var(--muted);font-size:13px}
 @media(max-width:440px){.chart{gap:10px}.month-row{padding-bottom:9px}.month-row-head strong{font-size:12px}.month-total{font-size:11px}.month-values{font-size:9px}}
@@ -160,7 +160,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </section>
 
 <div class="layout">
-<section class="panel"><div class="panel-head"><div><h2 id="yearMovementTitle">Movimentação 2026</h2><div class="sub">Previsão mensal dos lançamentos recorrentes</div></div></div><div class="chart" id="chart"></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Entradas</span><span><i class="dot" style="background:var(--red)"></i>Saídas</span><span><i class="dot" style="background:var(--blue)"></i>Saldo atual em conta</span></div></section>
+<section class="panel"><div class="panel-head"><div><h2 id="yearMovementTitle">Movimentação 2026</h2><div class="sub">Previsão mensal dos lançamentos recorrentes</div></div></div><div class="chart" id="chart"></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Entradas</span><span><i class="dot" style="background:var(--red)"></i>Saídas</span></div></section>
 <section class="panel"><div class="panel-head"><div><h2 class="income-title">Receitas previstas</h2><div class="sub">Previsibilidade do que deve entrar</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkIncomeBtn" type="button" title="Alternar o status de todas as receitas">⇄ Todos os status</button><button class="add-income" id="addIncomeBtn">＋ Receita</button></div></div><div id="incomePlanRows"></div>
 <div class="panel-head" style="margin-top:16px"><div><h2 class="fixed-title">Despesas fixas</h2><div class="sub">Contas fixas e débitos</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkExpenseBtn" type="button" title="Alternar o status de todas as despesas fixas">⇄ Todos os status</button><button class="add-expense" id="addExpenseBtn">＋ Despesa</button></div></div><div id="expensePlanRows"></div>
 <div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas Cartões</h2></div><div class="section-actions"><button class="secondary bulk-status" id="bulkCardBtn" type="button" title="Alternar o status de todas as despesas com cartões">⇄ Todos os status</button><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div></div><div id="cardExpenseRows"></div></div>
@@ -313,9 +313,11 @@ function renderChart(){
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
  const isCurrent=selected===monthNow();
- const income=isCurrent?state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.income||0);
+ const incomeBase=isCurrent?state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.income||0);
+ const income=incomeBase+(isCurrent?(+state.accountBalance||0):0);
  const expenses=isCurrent?state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.expenses||0);
  const balance=income-expenses;
+ const incomeLabel=isCurrent?'Receitas + saldo da conta':'Entradas';
  const [year,month]=selected.split('-').map(Number);
  const label=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
  const max=Math.max(1,income,expenses);
@@ -324,13 +326,10 @@ function renderChart(){
    const positive=m.balance>=0;
    return `<div class="month-row" title="${label}/${year}">
      <div class="month-row-head"><strong>${label.charAt(0).toUpperCase()+label.slice(1)} ${year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
-     <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="Entradas: ${money(m.income)}"></span></div>
+     <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="${incomeLabel}: ${money(m.income)}"></span></div>
      <div class="month-track"><span class="month-bar expense-bar" style="width:${m.expenses>0?m.expenses/max*100:0}%" title="Saídas: ${money(m.expenses)}"></span></div>
-     <div class="month-values"><span>Entrou: ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
-      <div class="account-balance-chart">
-        <div class="month-values"><span>Saldo atual em conta</span><strong>${money(+state.accountBalance||0)}</strong></div>
-        <div class="month-track"><span class="month-bar account-bar" style="width:${(+state.accountBalance||0)>0?100:0}%" title="Saldo atual em conta: ${money(+state.accountBalance||0)}"></span></div>
-      </div>
+     <div class="month-values"><span>${isCurrent?'Receitas + conta:':'Entrou:'} ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
+
    </div>`;
  }).join(''):'<div class="empty-chart">Ainda não há movimentação para este mês.</div>';
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
