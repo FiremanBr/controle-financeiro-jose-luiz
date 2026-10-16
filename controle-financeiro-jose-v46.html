@@ -189,7 +189,19 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <section class="section panel" id="forex">
  <div class="panel-head"><div><h2>Forex — Controle de capital</h2><div class="sub">Acompanhe aportes, retiradas, saldo e rentabilidade por mês.</div></div></div>
  <div class="field" style="max-width:220px;margin-bottom:12px"><label>Ano</label><select id="forexYear"></select></div>
- <div id="forexMonthButtons" class="month-buttons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0"></div>
+ <div id="forexMonthButtons" class="month-buttons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0"></div> 
+ <div class="month-details" style="margin:14px 0">
+  <h3 style="margin:0 0 10px">Resumo anual</h3>
+  <div class="cards card-metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+   <div class="card"><div class="metric-label">Lucro / prejuízo acumulado</div><div class="metric positive" id="forexAnnualProfit">US$ 0,00</div></div>
+   <div class="card"><div class="metric-label">Rentabilidade acumulada</div><div class="metric positive" id="forexAnnualReturn">0,00%</div></div>
+   <div class="card"><div class="metric-label">Saldo mais recente</div><div class="metric blue" id="forexAnnualBalance">US$ 0,00</div></div>
+   <div class="card"><div class="metric-label">Capital líquido aportado</div><div class="metric blue" id="forexAnnualCapital">US$ 0,00</div></div>
+  </div>
+  <h3 style="margin:16px 0 8px">Evolução mensal do saldo</h3>
+  <div id="forexAnnualChart" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;align-items:end;min-height:150px;padding:12px 8px;border:1px solid var(--border,#2b3b51);border-radius:12px"></div>
+  <p class="sub" style="margin-top:8px">O resumo considera os meses com dados registrados. A rentabilidade acumulada usa o capital líquido aportado no ano como referência, não soma as porcentagens mensais.</p>
+ </div>
  <div class="month-details">
   <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong id="forexMonthTitle">Janeiro</strong><span class="pill">Mês selecionado</span></div>
   <div class="cards card-metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0">
@@ -425,6 +437,31 @@ function renderForex(){
  $('forexInvestedMetric').textContent=forexMoney(reference);$('forexBalanceMetric').textContent=forexMoney(balance);$('forexProfitMetric').textContent=forexMoney(profit);$('forexReturnMetric').textContent=pct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
  $('forexProfitMetric').className='metric '+(profit<0?'negative':'positive');$('forexReturnMetric').className='metric '+(profit<0?'negative':'positive');$('forexBalanceMetric').className='metric '+(balance<reference?'negative':'positive');
  $('forexMoveNote').textContent='Saldo inicial automático do mês: '+forexMoney(base)+'. Aportes: '+forexMoney(deposits)+' · Retiradas: '+forexMoney(withdrawals)+'.';
+ renderForexAnnual(Number(y));
+}
+function renderForexAnnual(year){
+ const all=forexData(),keys=forexNames.map((n,i)=>year+'-'+String(i+1).padStart(2,'0'));
+ let annualProfit=0,annualNetCapital=0,lastBalance=0,hasData=false;
+ const points=keys.map((key,i)=>{
+  const r=all[key];if(!r)return {month:forexNames[i].slice(0,3),balance:null,profit:0,capital:0};
+  const initial=Number(r.initial)||0,deposits=Number(r.deposits)||0,withdrawals=Number(r.withdrawals)||0,balance=Number(r.balance)||0;
+  const profit=balance-initial-deposits+withdrawals;
+  annualProfit+=profit;annualNetCapital+=deposits-withdrawals;lastBalance=balance;hasData=true;
+  return {month:forexNames[i].slice(0,3),balance,profit,capital:initial+deposits-withdrawals};
+ });
+ const returnPct=annualNetCapital>0?annualProfit/annualNetCapital*100:0;
+ $('forexAnnualProfit').textContent=forexMoney(annualProfit);
+ $('forexAnnualReturn').textContent=returnPct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+ $('forexAnnualBalance').textContent=forexMoney(lastBalance);
+ $('forexAnnualCapital').textContent=forexMoney(annualNetCapital);
+ $('forexAnnualProfit').className='metric '+(annualProfit<0?'negative':'positive');
+ $('forexAnnualReturn').className='metric '+(annualProfit<0?'negative':'positive');
+ const chart=$('forexAnnualChart'),vals=points.filter(p=>p.balance!==null).map(p=>p.balance),max=Math.max(1,...vals);
+ chart.innerHTML=points.map(p=>{
+  if(p.balance===null)return '<div style="text-align:center;min-width:0"><div style="height:96px;display:flex;align-items:end;justify-content:center"><div style="width:70%;height:3px;border-radius:4px;background:var(--border,#2b3b51)"></div></div><div style="font-size:11px;color:var(--muted,#9eb0c7);margin-top:5px">'+p.month+'</div></div>';
+  const h=Math.max(5,Math.round(p.balance/max*96));
+  return '<div title="'+p.month+': '+forexMoney(p.balance)+'" style="text-align:center;min-width:0"><div style="height:96px;display:flex;align-items:end;justify-content:center"><div style="width:70%;height:'+h+'px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#39d6a0,#3b82f6)"></div></div><div style="font-size:11px;color:var(--muted,#9eb0c7);margin-top:5px">'+p.month+'</div><div style="font-size:9px;color:var(--text,#edf3fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.balance.toFixed(0)+'</div></div>';
+ }).join('');
 }
 function forexSave(){save();renderForex()}
 function forexMove(type){
