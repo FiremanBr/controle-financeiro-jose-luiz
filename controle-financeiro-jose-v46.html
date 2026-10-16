@@ -189,7 +189,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 const FIN_SUPABASE_URL='https://zxdnyadooquqfmfptypae.supabase.co';
 const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
-const cloudGate=$('cloudGate'), cloudStatus=$('cloudStatus'), cloudLoginForm=$('cloudLoginForm');
+const cloudGate=document.getElementById('cloudGate'), cloudStatus=document.getElementById('cloudStatus'), cloudLoginForm=document.getElementById('cloudLoginForm');
 function cloudMessage(msg){cloudStatus.textContent=msg}
 async function startCloudSession(session){
  try{
