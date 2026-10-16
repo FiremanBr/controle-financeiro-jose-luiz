@@ -120,7 +120,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 @media(max-width:440px){#installments .month-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}#installments .month-details{padding:12px}#installments .purchase-row{padding:12px 0}}
 
 
-#cloudGate{position:fixed;inset:0;z-index:9999;background:#08111ff2;display:flex;align-items:center;justify-content:center;padding:18px}
+#cloudGate{position:fixed;inset:0;z-index:9999;background:#08111ff2;display:none;align-items:center;justify-content:center;padding:18px}
 #cloudGate .cloud-box{width:min(100%,430px);background:#121d2e;border:1px solid #344860;border-radius:18px;padding:22px;box-shadow:0 20px 70px #0008}
 #cloudGate h2{margin:0 0 8px;font-size:21px}#cloudGate p{color:#b9c7d8;font-size:13px}
 #cloudGate label{display:block;font-size:12px;margin:12px 0 5px;color:#b9c7d8}
@@ -486,6 +486,7 @@ async function ensureSupabaseLibrary(){
   });
   const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
   if(data.session){await startCloudSession(data.session);}
+  else{cloudGate.style.display='flex';}
   cloudLoginForm.addEventListener('submit',async e=>{
    e.preventDefault();
    const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
@@ -502,7 +503,7 @@ async function ensureSupabaseLibrary(){
    }
    finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
   });
- }catch(e){cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
+ }catch(e){cloudGate.style.display='flex';cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
 })();
 </script>
 </body></html>
