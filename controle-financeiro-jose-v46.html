@@ -165,7 +165,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div class="panel-head" style="margin-top:16px"><div><h2 class="fixed-title">Despesas fixas</h2><div class="sub">Contas fixas e débitos</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkExpenseBtn" type="button" title="Alternar o status de todas as despesas fixas">⇄ Todos os status</button><button class="add-expense" id="addExpenseBtn">＋ Despesa</button></div></div><div id="expensePlanRows"></div>
 <div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas Cartões</h2></div><div class="section-actions"><button class="secondary bulk-status" id="bulkCardBtn" type="button" title="Alternar o status de todas as despesas com cartões">⇄ Todos os status</button><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div></div><div id="cardExpenseRows"></div></div>
 </section></div>
-<div id="shareCapture"><nav class="nav"><button class="active cards-tab" data-tab="cards">Cartão Sicredi</button><button class="secondary" data-tab="installments">Parcelas</button><button class="secondary" data-tab="settings">Dados e backup</button></nav>
+<div id="shareCapture"><nav class="nav"><button class="active cards-tab" data-tab="cards">Cartão Sicredi</button><button class="secondary" data-tab="installments">Parcelas</button><button class="secondary" data-tab="forex">Forex</button><button class="secondary" data-tab="settings">Dados e backup</button></nav>
 
 <section class="section active panel" id="cards"><div class="panel-head"><div><h2>Cartão Sicredi - Ciclo até dia 20</h2></div></div>
 <div class="cards card-metric-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
@@ -186,6 +186,28 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div id="installmentMonthDetails" class="month-details"><div class="sub">Selecione um mês para ver as compras previstas.</div></div>
 </section>
 <section class="section panel" id="settings"><h2>Dados e backup</h2><p class="sub">Backup e importação ficam aqui para não ocupar espaço no topo da tela.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px"><button id="exportBtn" class="secondary">Exportar backup</button><button id="importBtn" class="secondary">Importar backup</button><input id="importFile" type="file" accept=".json" class="hide"><button id="exportCsv" class="secondary">Exportar previsões CSV</button></div></section>
+<section class="section panel" id="forex">
+ <div class="panel-head"><div><h2>Forex — Controle de capital</h2><div class="sub">Acompanhe aportes, retiradas, saldo e rentabilidade por mês.</div></div></div>
+ <div class="field" style="max-width:220px;margin-bottom:12px"><label>Ano</label><select id="forexYear"></select></div>
+ <div id="forexMonthButtons" class="month-buttons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0"></div>
+ <div class="month-details">
+  <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong id="forexMonthTitle">Janeiro</strong><span class="pill">Mês selecionado</span></div>
+  <div class="cards card-metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0">
+   <div class="card"><div class="metric-label">Capital líquido aportado</div><div class="metric blue" id="forexInvestedMetric">US$ 0,00</div></div>
+   <div class="card"><div class="metric-label">Saldo atual</div><div class="metric positive" id="forexBalanceMetric">US$ 0,00</div></div>
+   <div class="card"><div class="metric-label">Lucro / prejuízo</div><div class="metric positive" id="forexProfitMetric">US$ 0,00</div></div>
+   <div class="card"><div class="metric-label">Rentabilidade</div><div class="metric positive" id="forexReturnMetric">0,00%</div></div>
+  </div>
+  <form id="forexForm" class="quick-grid">
+   <div class="field"><label>Capital inicial (US$)</label><input id="forexInitial" type="number" min="0" step="0.01" required></div>
+   <div class="field"><label>Aportes no mês (US$)</label><input id="forexDeposits" type="number" min="0" step="0.01" required></div>
+   <div class="field"><label>Retiradas no mês (US$)</label><input id="forexWithdrawals" type="number" min="0" step="0.01" required></div>
+   <div class="field"><label>Saldo atual da conta (US$)</label><input id="forexBalance" type="number" min="0" step="0.01" required></div>
+   <div class="field span2"><button class="submit" type="submit">Salvar dados do mês</button></div>
+  </form>
+  <p class="sub" style="margin-top:10px">Lucro = saldo atual − capital líquido aportado. Rentabilidade = lucro ÷ capital líquido aportado × 100. Informe o saldo total da conta no mês selecionado.</p>
+ </div>
+</section>
 </div>
 
 </div>
@@ -363,7 +385,29 @@ $('exportBtn').onclick=()=>download('backup-financas-jose.json',JSON.stringify(s
 $('exportCsv').onclick=()=>{let rows=[['Tipo','Nome','Valor','Situação'],...state.incomes.map(x=>['Entrada',x.name,x.amount,x.status]),...state.expenses.map(x=>['Despesa',x.name,x.amount,x.status])];download('previsoes-financas-jose.csv','\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8')};
 function download(name,content,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
 if($('clearData'))$('clearData').onclick=()=>{if(confirm('Apagar todas as previsões e ajustes salvos neste navegador?')){localStorage.removeItem('finjose_v2');location.reload()}}
-initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();
+
+/* Controle Forex por mês */
+const forexNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let forexSelectedMonth=String(new Date().getMonth()+1).padStart(2,'0');
+function forexKey(){return $('forexYear').value+'-'+forexSelectedMonth}
+function forexData(){if(!state.forex||typeof state.forex!=='object')state.forex={};return state.forex}
+function forexMoney(v){return 'US$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function renderForex(){
+ const y=$('forexYear').value||String(new Date().getFullYear());
+ $('forexMonthButtons').innerHTML=forexNames.map((n,i)=>{const m=String(i+1).padStart(2,'0');return '<button type="button" class="'+(m===forexSelectedMonth?'active':'secondary')+'" data-forex-month="'+m+'">'+n+'</button>'}).join('');
+ const rec=forexData()[y+'-'+forexSelectedMonth]||{initial:0,deposits:0,withdrawals:0,balance:0};
+ $('forexMonthTitle').textContent=forexNames[Number(forexSelectedMonth)-1]+' '+y;
+ ['Initial','Deposits','Withdrawals','Balance'].forEach((k,i)=>$('forex'+k).value=Number(rec[['initial','deposits','withdrawals','balance'][i]]||0).toFixed(2));
+ const invested=Number(rec.initial||0)+Number(rec.deposits||0)-Number(rec.withdrawals||0),profit=Number(rec.balance||0)-invested,pct=invested>0?profit/invested*100:0;
+ $('forexInvestedMetric').textContent=forexMoney(invested);$('forexBalanceMetric').textContent=forexMoney(rec.balance);$('forexProfitMetric').textContent=forexMoney(profit);$('forexReturnMetric').textContent=pct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+ $('forexProfitMetric').className='metric '+(profit<0?'negative':'positive');$('forexReturnMetric').className='metric '+(profit<0?'negative':'positive');$('forexBalanceMetric').className='metric '+(Number(rec.balance)<invested?'negative':'positive');
+}
+$('forexYear').innerHTML=[...new Set([new Date().getFullYear()-1,new Date().getFullYear(),new Date().getFullYear()+1])].map(y=>'<option value="'+y+'">'+y+'</option>').join('');$('forexYear').value=String(new Date().getFullYear());
+$('forexMonthButtons').addEventListener('click',e=>{const b=e.target.closest('[data-forex-month]');if(!b)return;forexSelectedMonth=b.dataset.forexMonth;renderForex()});
+$('forexForm').addEventListener('submit',e=>{e.preventDefault();forexData()[forexKey()]={initial:Math.max(0,Number($('forexInitial').value)||0),deposits:Math.max(0,Number($('forexDeposits').value)||0),withdrawals:Math.max(0,Number($('forexWithdrawals').value)||0),balance:Math.max(0,Number($('forexBalance').value)||0)};save();renderForex();alert('Dados de Forex salvos.')});
+$('forexYear').addEventListener('change',renderForex);
+
+initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();renderForex();
 
 
 
