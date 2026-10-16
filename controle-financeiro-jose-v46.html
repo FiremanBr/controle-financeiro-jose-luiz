@@ -354,7 +354,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.query
 $('exportBtn').onclick=()=>download('backup-financas-jose.json',JSON.stringify(state,null,2),'application/json');$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.incomes)||!Array.isArray(d.expenses))throw Error();state=d;save();alert('Backup importado com sucesso.')}catch{alert('Arquivo inválido ou incompatível.')}e.target.value=''};
 $('exportCsv').onclick=()=>{let rows=[['Tipo','Nome','Valor','Situação'],...state.incomes.map(x=>['Entrada',x.name,x.amount,x.status]),...state.expenses.map(x=>['Despesa',x.name,x.amount,x.status])];download('previsoes-financas-jose.csv','\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8')};
 function download(name,content,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
-$('clearData').onclick=()=>{if(confirm('Apagar todas as previsões e ajustes salvos neste navegador?')){localStorage.removeItem('finjose_v2');location.reload()}}
+if($('clearData'))$('clearData').onclick=()=>{if(confirm('Apagar todas as previsões e ajustes salvos neste navegador?')){localStorage.removeItem('finjose_v2');location.reload()}}
 initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();
 
 
