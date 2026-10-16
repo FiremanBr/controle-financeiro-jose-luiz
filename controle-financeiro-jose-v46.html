@@ -198,14 +198,17 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
    <div class="card"><div class="metric-label">Lucro / prejuízo</div><div class="metric positive" id="forexProfitMetric">US$ 0,00</div></div>
    <div class="card"><div class="metric-label">Rentabilidade</div><div class="metric positive" id="forexReturnMetric">0,00%</div></div>
   </div>
-  <form id="forexForm" class="quick-grid">
-   <div class="field"><label>Capital inicial (US$)</label><input id="forexInitial" type="number" min="0" step="0.01" required></div>
-   <div class="field"><label>Aportes no mês (US$)</label><input id="forexDeposits" type="number" min="0" step="0.01" required></div>
-   <div class="field"><label>Retiradas no mês (US$)</label><input id="forexWithdrawals" type="number" min="0" step="0.01" required></div>
-   <div class="field"><label>Saldo atual da conta (US$)</label><input id="forexBalance" type="number" min="0" step="0.01" required></div>
-   <div class="field span2"><button class="submit" type="submit">Salvar dados do mês</button></div>
-  </form>
-  <p class="sub" style="margin-top:10px">Lucro = saldo atual − capital líquido aportado. Rentabilidade = lucro ÷ capital líquido aportado × 100. Informe o saldo total da conta no mês selecionado.</p>
+  <div class="month-details" style="margin-top:12px">
+   <div class="field"><label>Valor da movimentação (US$)</label><input id="forexMoveAmount" type="number" min="0.01" step="0.01" placeholder="Ex.: 10,00"></div>
+   <div class="quick-grid" style="margin-top:10px;grid-template-columns:repeat(2,minmax(0,1fr))">
+    <button class="secondary" type="button" id="forexDepositBtn">＋ Aporte</button>
+    <button class="secondary" type="button" id="forexWithdrawBtn">− Retirada</button>
+   </div>
+   <p class="sub" id="forexMoveNote" style="margin-top:8px">Escolha aporte ou retirada para registrar a movimentação.</p>
+   <div class="field" style="margin-top:14px"><label>Saldo atual da conta (US$)</label><input id="forexBalance" type="number" min="0" step="0.01" placeholder="Informe o saldo da corretora"></div>
+   <button class="submit" type="button" id="forexSaveBalance" style="margin-top:10px">Salvar saldo atual</button>
+   <p class="sub" style="margin-top:10px">O saldo inicial de cada mês é puxado automaticamente do saldo final do mês anterior. O lucro mensal desconta aportes e considera retiradas, para não confundir movimentação de dinheiro com lucro de trading.</p>
+  </div>
  </div>
 </section>
 </div>
@@ -392,19 +395,49 @@ let forexSelectedMonth=String(new Date().getMonth()+1).padStart(2,'0');
 function forexKey(){return $('forexYear').value+'-'+forexSelectedMonth}
 function forexData(){if(!state.forex||typeof state.forex!=='object')state.forex={};return state.forex}
 function forexMoney(v){return 'US$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function forexPreviousKey(){
+ const [yy,mm]=forexKey().split('-').map(Number);
+ const d=new Date(yy,mm-2,1);
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function forexRecord(key){
+ const all=forexData();
+ if(all[key])return all[key];
+ const prev=all[forexPreviousKeyFor(key)];
+ if(prev)return {initial:Number(prev.balance)||0,deposits:0,withdrawals:0,balance:Number(prev.balance)||0,autoStart:true};
+ return {initial:0,deposits:0,withdrawals:0,balance:0};
+}
+function forexPreviousKeyFor(key){const [yy,mm]=key.split('-').map(Number);const d=new Date(yy,mm-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function renderForex(){
  const y=$('forexYear').value||String(new Date().getFullYear());
  $('forexMonthButtons').innerHTML=forexNames.map((n,i)=>{const m=String(i+1).padStart(2,'0');return '<button type="button" class="'+(m===forexSelectedMonth?'active':'secondary')+'" data-forex-month="'+m+'">'+n+'</button>'}).join('');
- const rec=forexData()[y+'-'+forexSelectedMonth]||{initial:0,deposits:0,withdrawals:0,balance:0};
+ const key=y+'-'+forexSelectedMonth,all=forexData();
+ if(!all[key]){
+  const prev=all[forexPreviousKeyFor(key)];
+  if(prev)all[key]={initial:Number(prev.balance)||0,deposits:0,withdrawals:0,balance:Number(prev.balance)||0,autoStart:true};
+  else all[key]={initial:0,deposits:0,withdrawals:0,balance:0};
+ }
+ const rec=all[key];
  $('forexMonthTitle').textContent=forexNames[Number(forexSelectedMonth)-1]+' '+y;
- ['Initial','Deposits','Withdrawals','Balance'].forEach((k,i)=>$('forex'+k).value=Number(rec[['initial','deposits','withdrawals','balance'][i]]||0).toFixed(2));
- const invested=Number(rec.initial||0)+Number(rec.deposits||0)-Number(rec.withdrawals||0),profit=Number(rec.balance||0)-invested,pct=invested>0?profit/invested*100:0;
- $('forexInvestedMetric').textContent=forexMoney(invested);$('forexBalanceMetric').textContent=forexMoney(rec.balance);$('forexProfitMetric').textContent=forexMoney(profit);$('forexReturnMetric').textContent=pct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
- $('forexProfitMetric').className='metric '+(profit<0?'negative':'positive');$('forexReturnMetric').className='metric '+(profit<0?'negative':'positive');$('forexBalanceMetric').className='metric '+(Number(rec.balance)<invested?'negative':'positive');
+ $('forexBalance').value=Number(rec.balance||0).toFixed(2);
+ const base=Number(rec.initial||0),deposits=Number(rec.deposits||0),withdrawals=Number(rec.withdrawals||0),balance=Number(rec.balance||0);
+ const reference=base+deposits-withdrawals,profit=balance-base-deposits+withdrawals,pct=(base+deposits)>0?profit/(base+deposits)*100:0;
+ $('forexInvestedMetric').textContent=forexMoney(reference);$('forexBalanceMetric').textContent=forexMoney(balance);$('forexProfitMetric').textContent=forexMoney(profit);$('forexReturnMetric').textContent=pct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+ $('forexProfitMetric').className='metric '+(profit<0?'negative':'positive');$('forexReturnMetric').className='metric '+(profit<0?'negative':'positive');$('forexBalanceMetric').className='metric '+(balance<reference?'negative':'positive');
+ $('forexMoveNote').textContent='Saldo inicial automático do mês: '+forexMoney(base)+'. Aportes: '+forexMoney(deposits)+' · Retiradas: '+forexMoney(withdrawals)+'.';
+}
+function forexSave(){save();renderForex()}
+function forexMove(type){
+ const amount=Number($('forexMoveAmount').value)||0;if(amount<=0){alert('Informe um valor maior que zero.');return}
+ const rec=forexData()[forexKey()]||{initial:0,deposits:0,withdrawals:0,balance:0};
+ if(type==='deposit'){rec.deposits=(Number(rec.deposits)||0)+amount;rec.balance=(Number(rec.balance)||0)+amount}
+ else {if(amount>Number(rec.balance||0)){alert('A retirada não pode ser maior que o saldo atual registrado. Atualize o saldo da conta primeiro, se necessário.');return}rec.withdrawals=(Number(rec.withdrawals)||0)+amount;rec.balance=(Number(rec.balance)||0)-amount}
+ forexData()[forexKey()]=rec;$('forexMoveAmount').value='';forexSave();$('forexMoveNote').textContent=(type==='deposit'?'Aporte':'Retirada')+' de '+forexMoney(amount)+' registrado.';
 }
 $('forexYear').innerHTML=[...new Set([new Date().getFullYear()-1,new Date().getFullYear(),new Date().getFullYear()+1])].map(y=>'<option value="'+y+'">'+y+'</option>').join('');$('forexYear').value=String(new Date().getFullYear());
 $('forexMonthButtons').addEventListener('click',e=>{const b=e.target.closest('[data-forex-month]');if(!b)return;forexSelectedMonth=b.dataset.forexMonth;renderForex()});
-$('forexForm').addEventListener('submit',e=>{e.preventDefault();forexData()[forexKey()]={initial:Math.max(0,Number($('forexInitial').value)||0),deposits:Math.max(0,Number($('forexDeposits').value)||0),withdrawals:Math.max(0,Number($('forexWithdrawals').value)||0),balance:Math.max(0,Number($('forexBalance').value)||0)};save();renderForex();alert('Dados de Forex salvos.')});
+$('forexDepositBtn').addEventListener('click',()=>forexMove('deposit'));$('forexWithdrawBtn').addEventListener('click',()=>forexMove('withdraw'));
+$('forexSaveBalance').addEventListener('click',()=>{const rec=forexData()[forexKey()]||{initial:0,deposits:0,withdrawals:0,balance:0};rec.balance=Math.max(0,Number($('forexBalance').value)||0);forexData()[forexKey()]=rec;forexSave();alert('Saldo atual salvo.')});
 $('forexYear').addEventListener('change',renderForex);
 
 initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();renderForex();
