@@ -341,7 +341,7 @@ initMonths();$('monthFilter').addEventListener('change',()=>renderChart());rende
 
 
 // Exportação com retorno visível na própria página (não depende de pop-up ou html2canvas).
-$('captureShareBtn').addEventListener('click',()=>{
+if($('captureShareBtn'))$('captureShareBtn').addEventListener('click',()=>{
   const btn=$('captureShareBtn');
   let result=document.getElementById('captureResult');
   if(!result){
