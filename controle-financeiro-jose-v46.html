@@ -248,7 +248,7 @@ function save(){
  if(cloudReady && cloudClient && cloudUser && !cloudSyncBusy){
   cloudSyncBusy=true;
   cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'})
-   .then(({error})=>{if(error){console.error(error);$('cloudStatus').textContent='Alterações salvas neste aparelho, mas a nuvem informou um erro: '+error.message;}})
+   .then(({error})=>{if(error){console.error(error);if($('cloudStatus'))$('cloudStatus').textContent='Alterações salvas neste aparelho, mas a nuvem informou um erro: '+error.message;}})
    .finally(()=>{cloudSyncBusy=false});
  }
 }
