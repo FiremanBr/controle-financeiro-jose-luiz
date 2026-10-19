@@ -462,26 +462,28 @@ function renderForex(){
  renderForexAnnual(Number(y));
 }
 function renderForexAnnual(year){
- const all=forexData(),keys=forexNames.map((n,i)=>year+'-'+String(i+1).padStart(2,'0'));
- let annualProfit=0,annualNetCapital=0,lastBalance=0,latestMonth=-1;
+ const all=forexData(),selectedMonth=Number(forexSelectedMonth)||new Date().getMonth()+1;
+ const keys=forexNames.map((n,i)=>year+'-'+String(i+1).padStart(2,'0'));
+ let annualProfit=0,annualNetCapital=0,lastBalance=0,hasLastBalance=false,baseCounted=false;
  const points=keys.map((key,i)=>{
   const r=all[key];if(!r)return {month:forexNames[i].slice(0,3),balance:null,profit:0,capital:0};
   const initial=Number(r.initial)||0,deposits=Number(r.deposits)||0,withdrawals=Number(r.withdrawals)||0,balance=Number(r.balance)||0;
   const profit=balance-initial-deposits+withdrawals;
-  annualProfit+=profit;
-  // Capital anual soma apenas capital inicial realmente informado e movimentações externas.
-  // Saldos iniciais automáticos são carregamentos do mês anterior, não novos aportes.
-  if(!r.autoStart) annualNetCapital+=initial;
-  annualNetCapital+=deposits-withdrawals;
-  // Meses autoStart apenas replicam o saldo anterior; não podem substituir o último saldo registrado.
-  const hasMonthData=deposits!==0||withdrawals!==0||(!r.autoStart&&(initial!==0||balance!==0));
-  if(hasMonthData && i>=latestMonth){latestMonth=i;lastBalance=balance;}
-  return {month:forexNames[i].slice(0,3),balance,profit,capital:(r.autoStart?0:initial)+deposits-withdrawals};
+  const isUpToSelectedMonth=i+1<=selectedMonth;
+  // No resumo anual, o capital inicial entra uma única vez; aportes/retiradas são somados mês a mês.
+  if(isUpToSelectedMonth){
+   if(!baseCounted && initial!==0){annualNetCapital+=initial;baseCounted=true;}
+   annualNetCapital+=deposits-withdrawals;
+   annualProfit+=profit;
+   // O saldo do resumo é o último saldo até o mês selecionado, não saldos automáticos de meses futuros.
+   if(initial!==0||deposits!==0||withdrawals!==0||balance!==0){lastBalance=balance;hasLastBalance=true;}
+  }
+  return {month:forexNames[i].slice(0,3),balance,profit,capital:(baseCounted?0:initial)+deposits-withdrawals};
  });
  const returnPct=annualNetCapital>0?annualProfit/annualNetCapital*100:0;
  $('forexAnnualProfit').textContent=forexMoney(annualProfit);
  $('forexAnnualReturn').textContent=returnPct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
- $('forexAnnualBalance').textContent=forexMoney(lastBalance);
+ $('forexAnnualBalance').textContent=forexMoney(hasLastBalance?lastBalance:0);
  $('forexAnnualCapital').textContent=forexMoney(annualNetCapital);
  $('forexAnnualProfit').className='metric '+(annualProfit<0?'negative':'positive');
  $('forexAnnualReturn').className='metric '+(annualProfit<0?'negative':'positive');
