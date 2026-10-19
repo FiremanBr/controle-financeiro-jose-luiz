@@ -469,12 +469,14 @@ function renderForexAnnual(year){
   const initial=Number(r.initial)||0,deposits=Number(r.deposits)||0,withdrawals=Number(r.withdrawals)||0,balance=Number(r.balance)||0;
   const profit=balance-initial-deposits+withdrawals;
   annualProfit+=profit;
-  // Capital líquido inclui saldo inicial/capital trazido do mês anterior e aportes, descontadas as retiradas.
-  annualNetCapital+=initial+deposits-withdrawals;
-  // Só considerar como mês registrado o que tem movimentação ou saldo diferente de zero.
-  const hasMonthData=initial!==0||deposits!==0||withdrawals!==0||balance!==0;
+  // Capital anual soma apenas capital inicial realmente informado e movimentações externas.
+  // Saldos iniciais automáticos são carregamentos do mês anterior, não novos aportes.
+  if(!r.autoStart) annualNetCapital+=initial;
+  annualNetCapital+=deposits-withdrawals;
+  // Meses autoStart apenas replicam o saldo anterior; não podem substituir o último saldo registrado.
+  const hasMonthData=deposits!==0||withdrawals!==0||(!r.autoStart&&(initial!==0||balance!==0));
   if(hasMonthData && i>=latestMonth){latestMonth=i;lastBalance=balance;}
-  return {month:forexNames[i].slice(0,3),balance,profit,capital:initial+deposits-withdrawals};
+  return {month:forexNames[i].slice(0,3),balance,profit,capital:(r.autoStart?0:initial)+deposits-withdrawals};
  });
  const returnPct=annualNetCapital>0?annualProfit/annualNetCapital*100:0;
  $('forexAnnualProfit').textContent=forexMoney(annualProfit);
