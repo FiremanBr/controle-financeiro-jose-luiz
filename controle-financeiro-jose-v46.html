@@ -463,12 +463,17 @@ function renderForex(){
 }
 function renderForexAnnual(year){
  const all=forexData(),keys=forexNames.map((n,i)=>year+'-'+String(i+1).padStart(2,'0'));
- let annualProfit=0,annualNetCapital=0,lastBalance=0,hasData=false;
+ let annualProfit=0,annualNetCapital=0,lastBalance=0,latestMonth=-1;
  const points=keys.map((key,i)=>{
   const r=all[key];if(!r)return {month:forexNames[i].slice(0,3),balance:null,profit:0,capital:0};
   const initial=Number(r.initial)||0,deposits=Number(r.deposits)||0,withdrawals=Number(r.withdrawals)||0,balance=Number(r.balance)||0;
   const profit=balance-initial-deposits+withdrawals;
-  annualProfit+=profit;annualNetCapital+=deposits-withdrawals;lastBalance=balance;hasData=true;
+  annualProfit+=profit;
+  // Capital líquido inclui saldo inicial/capital trazido do mês anterior e aportes, descontadas as retiradas.
+  annualNetCapital+=initial+deposits-withdrawals;
+  // Só considerar como mês registrado o que tem movimentação ou saldo diferente de zero.
+  const hasMonthData=initial!==0||deposits!==0||withdrawals!==0||balance!==0;
+  if(hasMonthData && i>=latestMonth){latestMonth=i;lastBalance=balance;}
   return {month:forexNames[i].slice(0,3),balance,profit,capital:initial+deposits-withdrawals};
  });
  const returnPct=annualNetCapital>0?annualProfit/annualNetCapital*100:0;
