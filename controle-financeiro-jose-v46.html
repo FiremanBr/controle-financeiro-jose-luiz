@@ -397,7 +397,7 @@ const setText=(id,value)=>{const el=$(id);if(el)el.textContent=value};setText('r
 
 function saveAccountBalance(){const input=$('accountBalanceInput');const raw=input.value.trim();if(!raw){state.accountBalance=0;save();return}const amount=parseBR(raw);if(!Number.isFinite(amount)||amount<0){alert('Informe um saldo válido, igual ou maior que zero.');input.value=numberBR(+state.accountBalance||0);return}state.accountBalance=Math.round(amount*100)/100;save();}
 $('accountBalanceInput').addEventListener('change',saveAccountBalance);
-$('accountBalanceInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveAccountBalance();input.blur?.();}});
+$('accountBalanceInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveAccountBalance();e.currentTarget.blur();}});
 $('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;function bulkSetStatus(kind){
  const source=kind==='cards'?'expenses':kind;
  const arr=state[source]||[];
