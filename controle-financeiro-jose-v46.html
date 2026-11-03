@@ -650,7 +650,10 @@ function bindCloudLogin(){
   finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
  });
 }
+let cloudReconnectBusy=false;
 async function reconnectCloud(){
+ if(cloudReconnectBusy||cloudReady)return;
+ cloudReconnectBusy=true;
  let stage='carregamento da biblioteca Supabase';
  try{
   await ensureSupabaseLibrary();stage='criação do cliente Supabase';
@@ -663,7 +666,7 @@ async function reconnectCloud(){
   console.error('Falha na etapa de inicialização Supabase:',stage,e);cloudReady=false;
   const message='Sincronização indisponível — '+stage+': '+(e.message||'erro desconhecido')+'. Seus dados locais estão preservados.';
   cloudMessage(message);showCloudSyncProblem(message);
- }
+ }finally{cloudReconnectBusy=false;}
 }
 document.getElementById('cloudReconnectBtn').addEventListener('click',reconnectCloud);
 document.getElementById('cloudManualLoginBtn').addEventListener('click',async()=>{
@@ -674,7 +677,6 @@ document.getElementById('cloudManualLoginBtn').addEventListener('click',async()=
  }catch(e){showCloudSyncProblem('Não foi possível preparar o login: '+(e.message||'erro desconhecido'));}
 });
 window.addEventListener('online',()=>{if(!cloudReady)reconnectCloud();});
-window.addEventListener('focus',()=>{if(!cloudReady)reconnectCloud();});
 reconnectCloud();
 </script>
 </body></html>
