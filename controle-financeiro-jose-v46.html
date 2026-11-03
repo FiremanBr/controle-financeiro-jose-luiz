@@ -652,7 +652,7 @@ async function ensureSupabaseLibrary(){
    }
    finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
   });
- }catch(e){console.error('Falha na etapa de inicialização Supabase:',cloudInitStage,e);cloudGate.style.display='flex';cloudMessage('Falha na etapa: '+cloudInitStage+'. Detalhe: '+(e.message||'erro desconhecido')+'. Seus dados locais foram mantidos.');}
+ }catch(e){console.error('Falha na etapa de inicialização Supabase:',cloudInitStage,e);cloudReady=false;cloudUser=null;cloudGate.style.display='none';cloudMessage('Sincronização temporariamente indisponível na etapa: '+cloudInitStage+'. O controle financeiro continuará em modo local e seus dados permanecerão neste aparelho. Detalhe: '+(e.message||'erro desconhecido'));}
 })();
 </script>
 </body></html>
