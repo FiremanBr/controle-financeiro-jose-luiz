@@ -606,23 +606,46 @@ async function startCloudSession(session){
 async function ensureSupabaseLibrary(){
  if(window.supabase && window.supabase.createClient)return;
  const sources=[
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://unpkg.com/@supabase/supabase-js@2'
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'
  ];
  let lastError=null;
  for(const src of sources){
   try{
    await new Promise((resolve,reject)=>{
     const script=document.createElement('script');
+    const timeout=setTimeout(()=>{script.remove();reject(new Error('Tempo esgotado ao carregar a biblioteca Supabase.'));},12000);
     script.src=src;script.async=true;
-    script.onload=()=>window.supabase&&window.supabase.createClient?resolve():reject(new Error('A biblioteca carregou sem disponibilizar o cliente Supabase.'));
-    script.onerror=()=>reject(new Error('Falha ao carregar '+src));
+    script.onload=()=>{clearTimeout(timeout);window.supabase&&window.supabase.createClient?resolve():reject(new Error('A biblioteca carregou sem disponibilizar o cliente Supabase.'));};
+    script.onerror=()=>{clearTimeout(timeout);script.remove();reject(new Error('Falha ao carregar '+src));};
     document.head.appendChild(script);
    });
    return;
   }catch(err){lastError=err;console.warn('Falha ao carregar biblioteca Supabase:',src,err);}
  }
- throw new Error('Não foi possível carregar a biblioteca Supabase por dois servidores. Verifique bloqueadores de conteúdo ou a rede. Detalhe: '+(lastError?.message||'falha desconhecida'));
+ throw new Error('Não foi possível carregar a biblioteca de conexão. Verifique a rede ou bloqueadores. Detalhe: '+(lastError?.message||'falha desconhecida'));
+}
+function bindCloudLogin(){
+ if(cloudLoginForm.dataset.bound==='1')return;
+ cloudLoginForm.dataset.bound='1';
+ cloudLoginForm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!cloudClient){cloudGate.style.display='flex';cloudMessage('A conexão ainda está sendo preparada. Atualize a página e tente novamente.');return;}
+  const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
+  try{
+   const {data:login,error:loginError}=await cloudClient.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
+   if(loginError)throw loginError;
+   if(!login.session)throw new Error('O Supabase não retornou uma sessão de acesso.');
+   await startCloudSession(login.session);
+  }catch(err){
+   console.error('Falha no login Supabase:',err);
+   const msg=String(err.message||'');
+   cloudGate.style.display='flex';
+   cloudMessage(msg.toLowerCase().includes('failed to fetch')
+    ? 'Não foi possível alcançar o serviço de autenticação. Seus dados locais foram mantidos. Verifique a conexão e tente novamente.'
+    : 'Não foi possível entrar: '+(msg||'confira e-mail e senha')+'. Seus dados locais foram mantidos.');
+  }finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
+ });
 }
 (async function initCloud(){
  try{
@@ -630,26 +653,22 @@ async function ensureSupabaseLibrary(){
   cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY,{
    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
   });
-  const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
-  if(data.session){await startCloudSession(data.session);}
-  else{cloudGate.style.display='flex';}
-  cloudLoginForm.addEventListener('submit',async e=>{
-   e.preventDefault();
-   const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
-   try{
-    const {data:login,error:loginError}=await cloudClient.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
-    if(loginError)throw loginError;
-    await startCloudSession(login.session);
-   }catch(err){
-    console.error('Falha no login Supabase:',err);
-    const msg=String(err.message||'');
-    cloudMessage(msg.toLowerCase().includes('failed to fetch')
-      ? 'O navegador não conseguiu alcançar o Supabase. Confira se a internet está funcionando e tente em uma janela anônima ou desative temporariamente bloqueadores para este site. Seus dados locais foram mantidos.'
-      : 'Não foi possível entrar: '+(msg||'confira e-mail e senha')+'. Seus dados locais foram mantidos.');
-   }
-   finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
-  });
- }catch(e){cloudGate.style.display='flex';cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
+  bindCloudLogin();
+  cloudGate.style.display='flex';
+  try{
+   const {data,error}=await cloudClient.auth.getSession();
+   if(error)throw error;
+   if(data.session)await startCloudSession(data.session);
+   else cloudGate.style.display='flex';
+  }catch(sessionError){
+   console.warn('Não foi possível recuperar a sessão salva; o login manual continua disponível:',sessionError);
+   cloudGate.style.display='flex';
+   cloudMessage('Não foi possível recuperar a sessão anterior. Entre novamente com seu e-mail e senha; os dados locais foram preservados.');
+  }
+ }catch(e){
+  cloudGate.style.display='flex';
+  cloudMessage('Erro ao carregar a conexão: '+(e.message||'erro desconhecido')+'. Seus dados locais foram mantidos.');
+ }
 })();
 </script>
 </body></html>
