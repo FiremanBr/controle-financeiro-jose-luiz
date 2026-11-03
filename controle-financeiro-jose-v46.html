@@ -625,13 +625,16 @@ async function ensureSupabaseLibrary(){
  throw new Error('Não foi possível carregar a biblioteca Supabase por dois servidores. Verifique bloqueadores de conteúdo ou a rede. Detalhe: '+(lastError?.message||'falha desconhecida'));
 }
 (async function initCloud(){
+ let cloudInitStage='carregamento da biblioteca Supabase';
  try{
   await ensureSupabaseLibrary();
+  cloudInitStage='criação do cliente Supabase';
   cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY,{
    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
   });
+  cloudInitStage='recuperação da sessão salva (auth.getSession)';
   const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
-  if(data.session){await startCloudSession(data.session);}
+  if(data.session){cloudInitStage='leitura dos dados sincronizados';await startCloudSession(data.session);}
   else{cloudGate.style.display='flex';}
   cloudLoginForm.addEventListener('submit',async e=>{
    e.preventDefault();
@@ -649,7 +652,7 @@ async function ensureSupabaseLibrary(){
    }
    finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
   });
- }catch(e){cloudGate.style.display='flex';cloudMessage('Erro ao preparar a conexão: '+(e.message||'erro desconhecido'));}
+ }catch(e){console.error('Falha na etapa de inicialização Supabase:',cloudInitStage,e);cloudGate.style.display='flex';cloudMessage('Falha na etapa: '+cloudInitStage+'. Detalhe: '+(e.message||'erro desconhecido')+'. Seus dados locais foram mantidos.');}
 })();
 </script>
 </body></html>
