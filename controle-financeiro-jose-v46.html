@@ -373,9 +373,10 @@ function renderChart(){
  if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=monthNow()).sort().reverse();
+ const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=monthNow());
  const current=monthNow();
  if(!keys.includes(current))keys.push(current);
+ keys.sort().reverse();
  const months=keys.map(key=>{
   const isCurrent=key===current;
   const record=hist[key]||{};
