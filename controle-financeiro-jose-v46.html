@@ -263,39 +263,45 @@ const seedIncomes=[
 const seedExpenses=[
 ['Telefone Fixo Claro _ 10',18.66,'Pago'],['Telef. Claro Ana_27(39,99); Vitor/Kalebe_24(34,99) _ (Débito em Conta)',109.88,'Pago'],['Luz _ 05',482.03,'Pago'],['Aluguel _05',1794.77,'A pagar'],['ABERGS _ 30 (Débito em conta)',23,'Pago'],['Internet Vivo _ 20 (Débito no cartão 3934 pelo APP Vivo)',130.99,'Pago'],['Consórcio _ 12',605.38,'Pago'],['Dental (Vitor) _ 08 (PIX)',120,'A pagar'],['Wizard    10 (PIX)',714,'A pagar'],['SICREDI - 03',8631.01,'Pago'],['Inter - 07',547.63,'Pago'],['Nubank',828.33,'Pago'],['Amazon (Bradesco) - 05',26.61,'Pago'],['Mercado Pago',47,'A pagar']];
 const seedInstallments=[
-["JG Matos Comercio",4,4,279.99,'SICREDI - 03'],
-["Pés sem Dor Ltda",10,10,62.40,'SICREDI - 03'],
-["Piramidegas",2,2,59.99,'SICREDI - 03'],
-["Asun Comercio",2,3,29.96,'SICREDI - 03'],
-["Zaffari F Vieira",2,3,74.60,'SICREDI - 03'],
-["Clínica Santo Antônio",2,2,101.71,'SICREDI - 03'],
-["65339022clariceda",2,3,53.30,'SICREDI - 03'],
-["Panvel Filial 442",3,3,42.26,'SICREDI - 03'],
-["Zaffari F Vieira",3,5,37.92,'SICREDI - 03'],
-["Pompeia Filial 29",4,5,43.98,'SICREDI - 03'],
-["Mallet Toscani",4,4,30.14,'SICREDI - 03'],
-["Centauro",8,10,130.49,'SICREDI - 03'],
-["Lojas Lebes",10,10,411.90,'SICREDI - 03'],
-["Panvel Digital",1,2,31.35,'SICREDI - 03'],
-["Shopee Babypataspe",1,2,89.53,'SICREDI - 03'],
-["Pg Intershop Int",2,10,150.90,'SICREDI - 03'],
-["Panvel Digital",2,2,72.98,'SICREDI - 03'],
-["Br1 Weburn",4,12,24.75,'SICREDI - 03'],
-["Magalu Magalu",4,10,149.89,'SICREDI - 03'],
-["Pg Granfaculdade",9,12,84.90,'SICREDI - 03'],
-["Mlp Magalu Kabum",10,10,286.19,'SICREDI - 03'],
-["Vivo Lj Rs Lv26",12,12,158.25,'SICREDI - 03'],
-["Mp Samsung",14,18,98.04,'SICREDI - 03'],
-["Senac Informática",19,24,358.60,'SICREDI - 03']
+ ["JG Matos Comercio",4,4,279.99,'SICREDI - 03'],
+ ["Pés sem Dor Ltda",10,10,62.40,'SICREDI - 03'],
+ ["Piramidegas",2,2,59.99,'SICREDI - 03'],
+ ["Asun Comercio",3,3,29.96,'SICREDI - 03'],
+ ["Zaffari F Vieira",3,3,74.60,'SICREDI - 03'],
+ ["Clínica Santo Antônio",2,2,101.71,'SICREDI - 03'],
+ ["65339022clariceda",3,3,53.30,'SICREDI - 03'],
+ ["Panvel Filial 442",3,3,42.26,'SICREDI - 03'],
+ ["Zaffari F Vieira",4,5,37.92,'SICREDI - 03'],
+ ["Pompeia Filial 29",5,5,43.98,'SICREDI - 03'],
+ ["Mallet Toscani",4,4,30.14,'SICREDI - 03'],
+ ["Centauro",9,10,130.49,'SICREDI - 03'],
+ ["Lojas Lebes",10,10,411.90,'SICREDI - 03'],
+ ["Panvel Digital",2,2,31.35,'SICREDI - 03'],
+ ["Shopee Babypataspe",2,2,89.53,'SICREDI - 03'],
+ ["Pg Intershop Int",3,10,150.90,'SICREDI - 03'],
+ ["Panvel Digital",2,2,72.98,'SICREDI - 03'],
+ ["Br1 Weburn",5,12,24.75,'SICREDI - 03'],
+ ["Magalu Magalu",5,10,149.89,'SICREDI - 03'],
+ ["Pg Granfaculdade",10,12,84.90,'SICREDI - 03'],
+ ["Mlp Magalu Kabum",10,10,286.19,'SICREDI - 03'],
+ ["Vivo Lj Rs Lv26",12,12,158.25,'SICREDI - 03'],
+ ["Mp Samsung",15,18,98.04,'SICREDI - 03'],
+ ["Senac Informática",20,24,358.60,'SICREDI - 03'],
+ ["Panvel Filial 442",1,2,35.66,'SICREDI - 03'],
+ ["Panvel Digital",1,4,42.75,'SICREDI - 03'],
+ ["Mallet Toscani",1,4,34.95,'SICREDI - 03'],
+ ["Casa Das Aliancas",1,3,53.34,'SICREDI - 03'],
+ ["Mp 68968217lucia",1,2,135.00,'SICREDI - 03'],
+ ["Pet Mais",1,2,42.40,'SICREDI - 03']
 ];
 let state;
 try{state=JSON.parse(localStorage.getItem('finjose_v2')||'null')}catch{}
 if(!state) state={month:monthNow(), incomes:seedIncomes.map((x,i)=>({id:'i'+i,name:x[0],amount:x[1],status:x[2]})),expenses:seedExpenses.map((x,i)=>({id:'e'+i,name:x[0],amount:x[1],status:x[2]})),installments:seedInstallments.map((x,i)=>({id:'p'+i,name:x[0],current:x[1],total:x[2],amount:x[3],card:x[4]})),card:{spent:6000,limit:7500,closing:20,reserved:0},forecastIncome:13626.92,forecastExpense:14079.29};
 
-if(state.sicrediStatementVersion!=='2026-09-cycle20'){
+if(state.sicrediStatementVersion!=='2026-11-statement03nov'){
   const otherCards=(state.installments||[]).filter(x=>!String(x.card||'').toLowerCase().includes('sicredi'));
   state.installments=otherCards.concat(seedInstallments.map((x,i)=>({id:'sicredi-statement-2026-09-'+i,name:x[0],current:x[1],total:x[2],amount:x[3],card:x[4]})));
-  state.sicrediStatementVersion='2026-09-cycle20';
+  state.sicrediStatementVersion='2026-11-statement03nov';
   try{localStorage.setItem('finjose_v2',JSON.stringify(state));}catch(e){}
 }
 
