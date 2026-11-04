@@ -119,80 +119,27 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 #installments .purchase-amount {font-size:clamp(13px,3.5vw,18px);font-weight:800}
 @media(max-width:440px){#installments .month-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}#installments .month-details{padding:12px}#installments .purchase-row{padding:12px 0}}
 
-
-#cloudGate{position:fixed;inset:0;z-index:9999;background:#08111ff2;display:none;align-items:center;justify-content:center;padding:18px}
-#cloudGate .cloud-box{width:min(100%,430px);background:#121d2e;border:1px solid #344860;border-radius:18px;padding:22px;box-shadow:0 20px 70px #0008}
-#cloudGate h2{margin:0 0 8px;font-size:21px}#cloudGate p{color:#b9c7d8;font-size:13px}
-#cloudGate label{display:block;font-size:12px;margin:12px 0 5px;color:#b9c7d8}
-#cloudGate input{width:100%;background:#0c1524;color:#edf3fb;border:1px solid #31445c;border-radius:9px;padding:12px}
-#cloudGate button{width:100%;margin-top:12px}#cloudStatus{font-size:12px;color:#f8dfa0;white-space:pre-wrap}
-
- .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:nowrap;min-width:0}.section-actions .bulk-status{padding:8px 10px;font-size:11px;white-space:nowrap}.section-actions>button{flex-shrink:0}.section-actions .add-card{display:inline-block;width:auto;min-width:0;margin-top:0;padding:8px 11px;font-size:12px;white-space:nowrap}@media(max-width:520px){.section-actions{gap:5px}.section-actions .bulk-status{padding:7px 7px;font-size:10px}.section-actions .add-income,.section-actions .add-expense{padding:9px 10px;font-size:12px}.section-actions .add-card{padding:7px 8px;font-size:11px}}
-
-/* Destaque aplicado somente aos lançamentos da lista; cartões-resumo preservados */
-.budget-row.status-income-received .budget-title{background:rgba(57,214,160,.12);border-left:4px solid #39d6a0;border-radius:8px;padding:5px 6px}
-.budget-row.status-income-received .amount-edit{color:#39d6a0!important;border-color:#39d6a0!important;font-weight:800}
-.budget-row.status-income-received .status-select{border-color:#39d6a0!important;color:#39d6a0!important}
-.budget-row.status-fixed-paid .budget-title{background:rgba(255,48,48,.10);border-left:4px solid #ff3030;border-radius:8px;padding:5px 6px}
-.budget-row.status-fixed-paid .amount-edit{color:#ff3030!important;border-color:#ff3030!important;font-weight:800}
-.budget-row.status-fixed-paid .status-select{border-color:#ff3030!important;color:#ff3030!important}
-.budget-row.status-card-paid .budget-title{background:rgba(255,207,36,.12);border-left:4px solid #ffcf24;border-radius:8px;padding:5px 6px}
-.budget-row.status-card-paid .amount-edit{color:#ffcf24!important;border-color:#ffcf24!important;font-weight:800}
-.budget-row.status-card-paid .status-select{border-color:#ffcf24!important;color:#ffcf24!important}
-
-/* Destaque temporário dos resumos conforme os status atuais */
-.card.status-highlight-green{border:2px solid var(--green)!important;background:linear-gradient(145deg,#123b34,#152237)!important;box-shadow:0 0 0 1px #39d6a044,0 0 22px #39d6a033!important}
-.card.status-highlight-red{border:2px solid var(--red)!important;background:linear-gradient(145deg,#421d29,#152237)!important;box-shadow:0 0 0 1px #ff303044,0 0 22px #ff303033!important}
-.card.status-highlight-yellow{border:2px solid var(--yellow)!important;background:linear-gradient(145deg,#44391b,#152237)!important;box-shadow:0 0 0 1px #ffcf2444,0 0 22px #ffcf2433!important}
-.card.status-highlight-green #receivableMetric{color:var(--green)!important}
-.card.status-highlight-red #fixedExpensesMetric{color:var(--red)!important}
-.card.status-highlight-yellow #cardExpensesMetric{color:var(--yellow)!important}
-
 </style>
 </head>
-<body>
-
-<div id="cloudGate">
- <div class="cloud-box">
-  <div class="eyebrow">CONTROLE FINANCEIRO</div>
-  <h2>Sincronizar PC e celular</h2>
-  <p><b>No computador atualizado:</b> gere um código. Este computador será a fonte inicial dos dados.</p>
-  <button id="createPairBtn" type="button">Preparar este PC e gerar código</button>
-  <div id="pairCodeBox" style="display:none;margin:12px 0;padding:14px;text-align:center;border:1px solid #39d6a0;border-radius:12px">
-   <div style="font-size:12px;color:#b9c7d8">CÓDIGO DE PAREAMENTO · válido por 10 minutos</div>
-   <div id="pairCodeValue" style="font-size:30px;font-weight:900;letter-spacing:4px;color:#39d6a0;margin:8px 0"></div>
-   <div style="font-size:11px;color:#b9c7d8">No celular, digite este código em “Conectar outro aparelho”.</div>
-  </div>
-  <hr style="border:0;border-top:1px solid #344860;margin:18px 0">
-  <p><b>No celular:</b> informe o código gerado no computador.</p>
-  <label for="pairCodeInput">Código de pareamento</label>
-  <input id="pairCodeInput" inputmode="text" autocomplete="off" maxlength="16" placeholder="16 caracteres">
-  <button id="joinPairBtn" type="button" class="secondary">Conectar este celular</button>
-  <div id="cloudStatus" role="status" aria-live="polite" style="margin-top:12px"></div>
-  <button id="closeCloudGate" type="button" class="secondary">Fechar</button>
- </div>
-</div>
-<div class="app">
-<div id="cloudSyncBanner" style="display:none;margin:10px 14px;padding:10px 12px;border:1px solid #42536b;border-radius:10px;background:#142238;color:#dce8f5;font-size:12px;align-items:center;gap:8px;flex-wrap:wrap"><span id="cloudSyncBannerText" style="flex:1;min-width:180px">Sincronização indisponível.</span><button id="cloudReconnectBtn" type="button" style="width:auto;margin:0;padding:8px 10px">Tentar sincronizar</button><button id="cloudManualLoginBtn" type="button" class="secondary" style="width:auto;margin:0;padding:8px 10px">Entrar manualmente</button></div>
+<body><div class="app">
 <header class="top"><div class="brand"><div class="logo">R$</div><div><h1>Controle Financeiro José Luiz</h1></div></div></header>
-<div class="period" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span class="sub">Competência financeira</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span><button id="closeFinanceMonthBtn" type="button" class="secondary" style="width:auto;margin:0;padding:9px 12px">Fechar mês e iniciar próximo</button></div>
+<div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span></div>
 <section class="cards">
 <div class="card"><div class="metric-label">Receitas a receber</div><div class="metric positive" id="receivableMetric">R$ 0,00</div><div class="metric-note">Entradas com situação “A receber”</div></div>
-<div class="card" style="display:none" aria-hidden="true"><div class="metric-label">Receitas recebidas</div><div class="metric positive" id="incomeMetric">R$ 0,00</div><div class="metric-note">Entradas confirmadas no período</div></div>
+<div class="card"><div class="metric-label">Receitas recebidas</div><div class="metric positive" id="incomeMetric">R$ 0,00</div><div class="metric-note">Entradas confirmadas no período</div></div>
 <div class="card"><div class="metric-label">Despesas fixas</div><div class="metric negative" id="fixedExpensesMetric">R$ 0,00</div><div class="metric-note">Total das contas fixas</div></div>
 <div class="card"><div class="metric-label">Despesas cartões</div><div class="metric negative" id="cardExpensesMetric">R$ 0,00</div><div class="metric-note">Total dos gastos com cartões</div></div>
 <div class="card"><div class="metric-label">Total despesas</div><div class="metric negative" id="totalExpensesMetric">R$ 0,00</div><div class="metric-note">Despesas fixas + cartões</div></div>
-<div class="card balance-card"><div class="metric-label">Previsão do Mês</div><div class="metric" id="forecastBalanceDetail" style="font-size:clamp(22px,2.2vw,30px);margin-top:5px">R$ 0,00</div><div class="metric-label" style="margin-top:12px">Movimentações</div><div style="display:flex;flex-direction:column;gap:14px;margin-top:14px"><div><div class="metric-label">Recebido</div><div class="metric positive" id="balanceIncomeDetail" style="font-size:clamp(22px,2.2vw,30px);margin-top:5px">R$ 0,00</div></div><div><div class="metric-label">Pago</div><div class="metric negative" id="balanceExpenseDetail" style="font-size:clamp(22px,2.2vw,30px);margin-top:5px">R$ 0,00</div></div></div></div>
-<div class="card account-balance-card"><div style="margin-top:12px"><label for="accountBalanceInput" class="metric-label" style="display:block;margin-bottom:5px">Saldo atual em conta (R$)</label><input id="accountBalanceInput" type="text" inputmode="decimal" placeholder="Informe o saldo disponível" aria-label="Saldo atual em conta" style="width:100%;min-width:0;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-weight:700"></div><div class="metric-label" style="margin-top:14px">Saldo disponível (conta + receitas − despesas)</div><div class="metric positive" id="combinedBalanceMetric" style="margin-top:6px">R$ 0,00</div></div>
+<div class="card balance-card"><div class="metric-label">Saldo do período</div><div class="metric balance-value" id="balanceMetric">R$ 0,00</div><div class="metric-note">Receitas recebidas menos despesas pagas</div><div class="balance-breakdown"><span>Recebido: <strong id="balanceIncomeDetail">R$ 0,00</strong></span><span>Pago: <strong id="balanceExpenseDetail">R$ 0,00</strong></span></div></div>
 </section>
 
 <div class="layout">
 <section class="panel"><div class="panel-head"><div><h2 id="yearMovementTitle">Movimentação 2026</h2><div class="sub">Previsão mensal dos lançamentos recorrentes</div></div></div><div class="chart" id="chart"></div><div class="legend"><span><i class="dot" style="background:var(--green)"></i>Entradas</span><span><i class="dot" style="background:var(--red)"></i>Saídas</span></div></section>
-<section class="panel"><div class="panel-head"><div><h2 class="income-title">Receitas previstas</h2><div class="sub">Previsibilidade do que deve entrar</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkIncomeBtn" type="button" title="Alternar o status de todas as receitas">⇄ Todos os status</button><button class="add-income" id="addIncomeBtn">＋ Receita</button></div></div><div id="incomePlanRows"></div>
-<div class="panel-head" style="margin-top:16px"><div><h2 class="fixed-title">Despesas fixas</h2><div class="sub">Contas fixas e débitos</div></div><div class="section-actions"><button class="secondary bulk-status" id="bulkExpenseBtn" type="button" title="Alternar o status de todas as despesas fixas">⇄ Todos os status</button><button class="add-expense" id="addExpenseBtn">＋ Despesa</button></div></div><div id="expensePlanRows"></div>
-<div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas Cartões</h2></div><div class="section-actions"><button class="secondary bulk-status" id="bulkCardBtn" type="button" title="Alternar o status de todas as despesas com cartões">⇄ Todos os status</button><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div></div><div id="cardExpenseRows"></div></div>
+<section class="panel"><div class="panel-head"><div><h2 class="income-title">Receitas previstas</h2><div class="sub">Previsibilidade do que deve entrar</div></div><button class="add-income" id="addIncomeBtn">＋ Receita</button></div><div id="incomePlanRows"></div>
+<div class="panel-head" style="margin-top:16px"><div><h2 class="fixed-title">Despesas fixas</h2><div class="sub">Contas fixas e débitos</div></div><button class="add-expense" id="addExpenseBtn">＋ Despesa</button></div><div id="expensePlanRows"></div>
+<div class="card-highlight cards-highlight" style="margin-top:18px"><div class="panel-head"><div><h2 class="cards-title">💳 Despesas com cartões</h2></div><button class="add-card" id="addCardExpenseBtn" type="button">＋ Cartão</button></div><div id="cardExpenseRows"></div></div>
 </section></div>
-<div id="shareCapture"><nav class="nav"><button class="active cards-tab" data-tab="cards">Cartão Sicredi</button><button class="secondary" data-tab="installments">Parcelas</button><button class="secondary" data-tab="forex">Forex</button><button class="secondary" data-tab="settings">Dados e backup</button></nav>
+<div id="shareCapture"><nav class="nav"><button class="active cards-tab" data-tab="cards">Cartão Sicredi</button><button class="secondary" data-tab="installments">Parcelas</button><button class="secondary" data-tab="settings">Dados e backup</button></nav>
 
 <section class="section active panel" id="cards"><div class="panel-head"><div><h2>Cartão Sicredi - Ciclo até dia 20</h2></div></div>
 <div class="cards card-metric-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
@@ -207,134 +154,67 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </section>
 <section class="section panel" id="installments"><div class="panel-head"><div><h2>Parcelas no cartão</h2><div class="sub">Nomes importados da planilha, com valores editáveis</div></div></div>
 <form id="installmentForm" class="quick-grid"><div class="field span2"><label>Compra / descrição</label><input id="instDesc" required placeholder="Nome da compra"></div><div class="field"><label>Cartão</label><select id="instCard"><option>SICREDI - 03</option><option>Inter - 07</option><option>Nubank</option><option>Amazon (Bradesco) - 05</option><option>Mercado Pago</option></select></div><div class="field"><label>Valor mensal (R$)</label><input id="instAmount" type="number" min=".01" step=".01" required></div><div class="field"><label>Parcela atual</label><input id="instCurrent" type="number" min="1" value="1" required></div><div class="field"><label>Total de parcelas</label><input id="instTotal" type="number" min="1" value="1" required></div><button class="span2" type="submit">＋ Adicionar parcelamento</button></form>
-<div class="cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px"><div class="card"><div class="metric-label">Parcelas ativas</div><div class="metric" id="instCount">0</div></div><div class="card"><div class="metric-label">Compromisso mensal</div><div class="metric blue" id="instMonthly">R$ 0,00</div></div><div class="card"><div class="metric-label">Total de parcelas futuras (todos os meses)</div><div class="metric" id="instRemaining">R$ 0,00</div></div></div>
-<div class="table-wrap" style="margin-top:14px"><table class="installment-table"><thead><tr><th>Compra</th><th>Parcela</th><th>Valor</th><th></th></tr></thead><tbody id="installmentRows"></tbody></table></div><div id="emptyInstallments" class="empty">Nenhuma parcela cadastrada.</div><div class="card" style="margin-top:14px;border:1px solid #36d6a0;background:linear-gradient(120deg,#123b37,#17283a);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="metric-label">TOTAL GERAL DAS PARCELAS — TODOS OS MESES</div><div class="sub">Soma de todas as parcelas que ainda faltam pagar, mês a mês</div></div><div class="metric positive" id="instAllMonthsTotal" style="font-size:clamp(22px,3vw,30px)">R$ 0,00</div></div>
-<div id="installmentMonthButtons" class="month-buttons"></div>
+<div class="cards" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:14px"><div class="card"><div class="metric-label">Parcelas ativas</div><div class="metric" id="instCount">0</div></div><div class="card"><div class="metric-label">Compromisso mensal</div><div class="metric blue" id="instMonthly">R$ 0,00</div></div><div class="card"><div class="metric-label">Saldo estimado</div><div class="metric" id="instRemaining">R$ 0,00</div></div></div>
+<div class="table-wrap" style="margin-top:14px"><table class="installment-table"><thead><tr><th>Compra</th><th>Parcela</th><th>Valor</th><th></th></tr></thead><tbody id="installmentRows"></tbody></table></div><div id="emptyInstallments" class="empty">Nenhuma parcela cadastrada.</div><div id="installmentMonthButtons" class="month-buttons"></div>
 <div id="installmentMonthDetails" class="month-details"><div class="sub">Selecione um mês para ver as compras previstas.</div></div>
 </section>
-<section class="section panel" id="settings"><h2>Dados e backup</h2><p class="sub">Backup e importação ficam aqui para não ocupar espaço no topo da tela.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px"><button id="exportBtn" class="secondary">Exportar backup</button><button id="importBtn" class="secondary">Importar backup</button><input id="importFile" type="file" accept=".json" class="hide"><button id="exportCsv" class="secondary">Exportar previsões CSV</button></div></section>
-<section class="section panel" id="forex">
- <div class="panel-head"><div><h2>Forex — Controle de capital</h2><div class="sub">Acompanhe aportes, retiradas, saldo e rentabilidade por mês.</div></div></div>
- <div class="field" style="max-width:220px;margin-bottom:12px"><label>Ano</label><select id="forexYear"></select></div>
- <div id="forexMonthButtons" class="month-buttons" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0"></div> 
- <div class="month-details" style="margin:14px 0">
-  <h3 style="margin:0 0 10px">Resumo anual</h3>
-  <div class="cards card-metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
-   <div class="card"><div class="metric-label">Capital líquido aportado</div><div class="metric blue" id="forexAnnualCapital">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Saldo mais recente</div><div class="metric blue" id="forexAnnualBalance">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Lucro / prejuízo acumulado</div><div class="metric positive" id="forexAnnualProfit">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Rentabilidade acumulada</div><div class="metric positive" id="forexAnnualReturn">0,00%</div></div>
-  </div>
-  <h3 style="margin:16px 0 8px">Evolução mensal do saldo</h3>
-  <div id="forexAnnualChart" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;align-items:end;min-height:150px;padding:12px 8px;border:1px solid var(--border,#2b3b51);border-radius:12px"></div>
-  <p class="sub" style="margin-top:8px">O resumo considera os meses com dados registrados. A rentabilidade acumulada usa o capital líquido aportado no ano como referência, não soma as porcentagens mensais.</p>
- </div>
- <div class="month-details">
-  <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong id="forexMonthTitle">Janeiro</strong><span class="pill">Mês selecionado</span></div>
-  <div class="cards card-metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0">
-   <div class="card"><div class="metric-label">Capital líquido aportado</div><div class="metric blue" id="forexInvestedMetric">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Saldo atual</div><div class="metric positive" id="forexBalanceMetric">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Lucro / prejuízo</div><div class="metric positive" id="forexProfitMetric">US$ 0,00</div></div>
-   <div class="card"><div class="metric-label">Rentabilidade</div><div class="metric positive" id="forexReturnMetric">0,00%</div></div>
-  </div>
-  <div class="month-details" style="margin-top:12px">
-   <div class="field"><label>Valor da movimentação (US$)</label><input id="forexMoveAmount" type="number" min="0.01" step="0.01" placeholder="Ex.: 10,00"></div>
-   <div class="quick-grid" style="margin-top:10px;grid-template-columns:repeat(2,minmax(0,1fr))">
-    <button class="secondary" type="button" id="forexDepositBtn">＋ Aporte</button>
-    <button class="secondary" type="button" id="forexWithdrawBtn">− Retirada</button>
-   </div>
-   <p class="sub" id="forexMoveNote" style="margin-top:8px">Escolha aporte ou retirada para registrar a movimentação.</p>
-   <div class="field" style="margin-top:14px"><label>Saldo atual da conta (US$)</label><input id="forexBalance" type="number" min="0" step="0.01" placeholder="Informe o saldo da corretora"></div>
-   <button class="submit" type="button" id="forexSaveBalance" style="margin-top:10px">Salvar saldo atual</button>
-   <p class="sub" style="margin-top:10px">O saldo inicial de cada mês é puxado automaticamente do saldo final do mês anterior. O lucro mensal desconta aportes e considera retiradas, para não confundir movimentação de dinheiro com lucro de trading.</p>
-  </div>
- </div>
-</section>
+<section class="section panel" id="settings"><h2>Dados e backup</h2><p class="sub">Backup e importação ficam aqui para não ocupar espaço no topo da tela.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px"><button id="exportBtn" class="secondary">Exportar backup</button><button id="importBtn" class="secondary">Importar backup</button><input id="importFile" type="file" accept=".json" class="hide"><button id="exportCsv" class="secondary">Exportar previsões CSV</button></div><div class="notice">Os dados ficam salvos neste navegador. Para sincronizar celular e computador será necessário banco de dados com autenticação. Não coloque informações bancárias sensíveis no repositório público.</div><button id="clearData" class="danger" style="margin-top:15px">Apagar dados locais</button></section>
 </div>
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id), money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
 const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const monthNow=()=>today().slice(0,7), shiftMonth=(key,delta)=>{let [y,m]=key.split('-').map(Number);let d=new Date(y,m-1+delta,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}, financeMonthNow=()=>shiftMonth(monthNow(),-1), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const monthNow=()=>today().slice(0,7), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const seedIncomes=[
 ['Salário',7000,'Recebido'],['Função Gratificada',2000,'Recebido'],['Abono Prev. Social',1500,'Recebido'],['Vale Refeição',426.92,'Recebido'],['Décimo Terceiro',0,'Previsto'],['Terço de Férias',0,'Previsto'],['Hora Aula',1000,'Previsto'],['Diárias',0,'Previsto'],['Mercado Financeiro',0,'Previsto'],['Ana',0,'Previsto'],['Joás',700,'A receber'],['Ecco Salva',1000,'A receber']];
 const seedExpenses=[
 ['Telefone Fixo Claro _ 10',18.66,'Pago'],['Telef. Claro Ana_27(39,99); Vitor/Kalebe_24(34,99) _ (Débito em Conta)',109.88,'Pago'],['Luz _ 05',482.03,'Pago'],['Aluguel _05',1794.77,'A pagar'],['ABERGS _ 30 (Débito em conta)',23,'Pago'],['Internet Vivo _ 20 (Débito no cartão 3934 pelo APP Vivo)',130.99,'Pago'],['Consórcio _ 12',605.38,'Pago'],['Dental (Vitor) _ 08 (PIX)',120,'A pagar'],['Wizard    10 (PIX)',714,'A pagar'],['SICREDI - 03',8631.01,'Pago'],['Inter - 07',547.63,'Pago'],['Nubank',828.33,'Pago'],['Amazon (Bradesco) - 05',26.61,'Pago'],['Mercado Pago',47,'A pagar']];
 const seedInstallments=[
- ["JG Matos Comercio",4,4,279.99,'SICREDI - 03'],
- ["Pés sem Dor Ltda",10,10,62.40,'SICREDI - 03'],
- ["Piramidegas",2,2,59.99,'SICREDI - 03'],
- ["Asun Comercio",3,3,29.96,'SICREDI - 03'],
- ["Zaffari F Vieira",3,3,74.60,'SICREDI - 03'],
- ["Clínica Santo Antônio",2,2,101.71,'SICREDI - 03'],
- ["65339022clariceda",3,3,53.30,'SICREDI - 03'],
- ["Panvel Filial 442",3,3,42.26,'SICREDI - 03'],
- ["Zaffari F Vieira",4,5,37.92,'SICREDI - 03'],
- ["Pompeia Filial 29",5,5,43.98,'SICREDI - 03'],
- ["Mallet Toscani",4,4,30.14,'SICREDI - 03'],
- ["Centauro",9,10,130.49,'SICREDI - 03'],
- ["Lojas Lebes",10,10,411.90,'SICREDI - 03'],
- ["Panvel Digital",2,2,31.35,'SICREDI - 03'],
- ["Shopee Babypataspe",2,2,89.53,'SICREDI - 03'],
- ["Pg Intershop Int",3,10,150.90,'SICREDI - 03'],
- ["Panvel Digital",2,2,72.98,'SICREDI - 03'],
- ["Br1 Weburn",5,12,24.75,'SICREDI - 03'],
- ["Magalu Magalu",5,10,149.89,'SICREDI - 03'],
- ["Pg Granfaculdade",10,12,84.90,'SICREDI - 03'],
- ["Mlp Magalu Kabum",10,10,286.19,'SICREDI - 03'],
- ["Vivo Lj Rs Lv26",12,12,158.25,'SICREDI - 03'],
- ["Mp Samsung",15,18,98.04,'SICREDI - 03'],
- ["Senac Informática",20,24,358.60,'SICREDI - 03'],
- ["Panvel Filial 442",1,2,35.66,'SICREDI - 03'],
- ["Panvel Digital",1,4,42.75,'SICREDI - 03'],
- ["Mallet Toscani",1,4,34.95,'SICREDI - 03'],
- ["Casa Das Aliancas",1,3,53.34,'SICREDI - 03'],
- ["Mp 68968217lucia",1,2,135.00,'SICREDI - 03'],
- ["Pet Mais",1,2,42.40,'SICREDI - 03']
+["Panvel Filial 442",1,2,35.66,'SICREDI - 03'],
+["Panvel Digital",1,4,42.75,'SICREDI - 03'],
+["Mallet Toscani",1,4,34.95,'SICREDI - 03'],
+["Casa das Alianças",1,3,53.34,'SICREDI - 03'],
+["MP 68968217 Lucia",1,2,135.00,'SICREDI - 03'],
+["Pet Mais",1,2,42.40,'SICREDI - 03'],
+["Zaffari F Vieira",4,5,37.92,'SICREDI - 03'],
+["Centauro",9,10,130.49,'SICREDI - 03'],
+["Pg Intershop Int",3,10,150.90,'SICREDI - 03'],
+["Br1 Weburn",5,12,24.75,'SICREDI - 03'],
+["Magalu Magalu",5,10,149.89,'SICREDI - 03'],
+["Pg Granfaculdade",10,12,84.90,'SICREDI - 03'],
+["Mp Samsung",15,18,98.04,'SICREDI - 03'],
+["Senac Informática",20,24,358.60,'SICREDI - 03']
 ];
 let state;
 try{state=JSON.parse(localStorage.getItem('finjose_v2')||'null')}catch{}
 if(!state) state={month:monthNow(), incomes:seedIncomes.map((x,i)=>({id:'i'+i,name:x[0],amount:x[1],status:x[2]})),expenses:seedExpenses.map((x,i)=>({id:'e'+i,name:x[0],amount:x[1],status:x[2]})),installments:seedInstallments.map((x,i)=>({id:'p'+i,name:x[0],current:x[1],total:x[2],amount:x[3],card:x[4]})),card:{spent:6000,limit:7500,closing:20,reserved:0},forecastIncome:13626.92,forecastExpense:14079.29};
 
-if(state.sicrediStatementVersion!=='2026-11-statement03nov'){
+if(state.sicrediStatementVersion!=='2026-11-due03'){
   const otherCards=(state.installments||[]).filter(x=>!String(x.card||'').toLowerCase().includes('sicredi'));
-  state.installments=otherCards.concat(seedInstallments.map((x,i)=>({id:'sicredi-statement-2026-09-'+i,name:x[0],current:x[1],total:x[2],amount:x[3],card:x[4]})));
-  state.sicrediStatementVersion='2026-11-statement03nov';
+  state.installments=otherCards.concat(seedInstallments.map((x,i)=>({id:'sicredi-statement-2026-11-'+i,name:x[0],current:x[1],total:x[2],amount:x[3],card:x[4]})));
+  state.sicrediStatementVersion='2026-11-due03';
   try{localStorage.setItem('finjose_v2',JSON.stringify(state));}catch(e){}
 }
 
 if(!state.history)state.history={};
-// Migração única: os lançamentos passam a usar competência do mês anterior ao calendário.
-if(state.competenceShiftVersion!==1){
- const backupKey='finjose_v2_before_competence_shift';
- if(!localStorage.getItem(backupKey))localStorage.setItem(backupKey,JSON.stringify(state));
- const shifted={};
- Object.keys(state.history||{}).forEach(k=>{shifted[shiftMonth(k,-1)]=state.history[k]});
- state.history=shifted;
- if(state.month)state.month=shiftMonth(state.month,-1);
- state.competenceShiftVersion=1;
- try{localStorage.setItem('finjose_v2',JSON.stringify(state));}catch(e){}
+const currentMonthKey=monthNow();
+if(state.month && state.month!==currentMonthKey){
+ const prevIncome=(state.incomes||[]).reduce((sum,x)=>sum+(+x.amount||0),0);
+ const prevExpense=(state.expenses||[]).reduce((sum,x)=>sum+(+x.amount||0),0);
+ state.history[state.month]={income:prevIncome,expenses:prevExpense,balance:prevIncome-prevExpense};
 }
-const currentMonthKey=financeMonthNow();
-if(!state.month)state.month=currentMonthKey;
-// O período ativo é controlado pelo fechamento manual, não pela virada automática do calendário.
+state.month=currentMonthKey;
 (state.incomes||[]).forEach(x=>{if(x.status==='Previsto')x.status='A receber';});
 (state.expenses||[]).forEach(x=>{if(x.status==='Previsto')x.status='A pagar';});
-let cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncQueue=Promise.resolve();
-let deviceSyncReady=false, deviceSyncRevision=0, deviceSyncBusy=false, deviceSyncConflict=false;
-function save(){
- localStorage.setItem('finjose_v2',JSON.stringify(state));render();
- if(deviceSyncReady) queueDevicePush();
-}
+function save(){localStorage.setItem('finjose_v2',JSON.stringify(state));render()}
 
 function isCardExpense(x){let cardNames=['SICREDI - 03','Inter - 07','Nubank','Amazon (Bradesco) - 05','Mercado Pago'];return x.category==='card'||cardNames.some(n=>String(x.name).toLowerCase().startsWith(n.toLowerCase()))}
-function renderPlans(kind){let arr=state[kind],root=$(kind==='incomes'?'incomePlanRows':'expensePlanRows');let isCard=x=>kind==='expenses'&&isCardExpense(x);let main=kind==='expenses'?arr.filter(x=>!isCard(x)):arr;let cards=kind==='expenses'?arr.filter(isCard):[];function rows(items){return items.map(x=>{let opts=kind==='incomes'?['A receber','Recebido']:['A pagar','Pago'];let highlight=kind==='incomes'?(x.status==='Recebido'?'status-income-received':''):(x.status==='Pago'?(isCardExpense(x)?'status-card-paid':'status-fixed-paid'):'');return `<div class="budget-row ${highlight}"><div class="budget-title"><div title="${esc(x.name)}"><strong>${esc(x.name)}</strong></div><input class="amount-edit" aria-label="Valor ${esc(x.name)}" title="Editar valor" type="number" min="0" step=".01" value="${(+x.amount).toFixed(2)}" onchange="editPlan('${kind}','${x.id}',this.value)"><select aria-label="Situação ${esc(x.name)}" class="status-select" onchange="setPlanStatus('${kind}','${x.id}',this.value)">${opts.map(o=>`<option ${x.status===o?'selected':''}>${o}</option>`).join('')}</select><button class="danger remove-row" title="Remover lançamento" onclick="removePlan('${kind}','${x.id}')">×</button></div></div>`}).join('')}root.innerHTML=rows(main);if(kind==='expenses')$('cardExpenseRows').innerHTML=rows(cards)}
+function renderPlans(kind){let arr=state[kind],root=$(kind==='incomes'?'incomePlanRows':'expensePlanRows');let isCard=x=>kind==='expenses'&&isCardExpense(x);let main=kind==='expenses'?arr.filter(x=>!isCard(x)):arr;let cards=kind==='expenses'?arr.filter(isCard):[];function rows(items){return items.map(x=>{let opts=kind==='incomes'?['A receber','Recebido']:['A pagar','Pago'];return `<div class="budget-row"><div class="budget-title"><div title="${esc(x.name)}"><strong>${esc(x.name)}</strong></div><input class="amount-edit" aria-label="Valor ${esc(x.name)}" title="Editar valor" type="number" min="0" step=".01" value="${(+x.amount).toFixed(2)}" onchange="editPlan('${kind}','${x.id}',this.value)"><select aria-label="Situação ${esc(x.name)}" class="status-select" onchange="setPlanStatus('${kind}','${x.id}',this.value)">${opts.map(o=>`<option ${x.status===o?'selected':''}>${o}</option>`).join('')}</select><button class="danger remove-row" title="Remover lançamento" onclick="removePlan('${kind}','${x.id}')">×</button></div></div>`}).join('')}root.innerHTML=rows(main);if(kind==='expenses')$('cardExpenseRows').innerHTML=rows(cards)}
 window.editPlan=(k,id,v)=>{let x=state[k].find(x=>x.id===id);if(x){x.amount=Math.max(0,+v||0);save()}};
 window.setPlanStatus=(k,id,val)=>{let x=state[k].find(x=>x.id===id);if(!x)return;let opts=k==='incomes'?['Previsto','Recebido','A receber']:['Previsto','Pago','A pagar'];if(opts.includes(val)){x.status=val;save()}};
 window.removePlan=(k,id)=>{if(confirm('Remover esta previsão?')){state[k]=state[k].filter(x=>x.id!==id);save()}};
-function addPlan(kind){let name=prompt(kind==='incomes'?'Nome da entrada conforme tua organização:':'Nome da despesa conforme tua organização:');if(!name||!name.trim())return;let raw=prompt('Valor previsto em R$:','0,00');if(raw===null)return;let amount=parseBR(raw);if(!Number.isFinite(amount)||amount<0){alert('Informe um valor válido.');return}state[kind].push({id:crypto.randomUUID(),name:name.trim(),amount,status:kind==='incomes'?'A receber':'A pagar'});save()}
+function addPlan(kind){let name=prompt(kind==='incomes'?'Nome da entrada conforme tua organização:':'Nome da despesa conforme tua organização:');if(!name||!name.trim())return;let raw=prompt('Valor previsto em R$:','0,00');if(raw===null)return;let amount=Number(raw.replace(',','.'));if(!Number.isFinite(amount)||amount<0){alert('Informe um valor válido.');return}state[kind].push({id:crypto.randomUUID(),name:name.trim(),amount,status:kind==='incomes'?'Previsto':'Previsto'});save()}
 function numberBR(v){return (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function parseBR(v){let s=String(v??'').trim().replace(/R\$\s?/g,'').replace(/\./g,'').replace(',','.').replace(/[^0-9.-]/g,'');let n=Number(s);return Number.isFinite(n)?n:0}
 function renderCard(){let c=state.card,avail=Math.max(0,c.limit-c.spent-c.reserved),pct=c.limit?Math.min(100,c.spent/c.limit*100):0;$('cardSpentMetric').value=numberBR(c.spent);$('cardLimitMetric').value=numberBR(c.limit);$('cardAvailableMetric').textContent=money(avail);$('cardProgress').style.width=pct+'%';$('cardProgress').style.background=pct>=100?'var(--red)':pct>=80?'var(--yellow)':'var(--green)';
@@ -350,8 +230,6 @@ function renderInstallments(){
  $('instCount').textContent=open.length;
  $('instMonthly').textContent=money(sum(open));
  $('instRemaining').textContent=money(open.reduce((s,x)=>s+(+x.amount||0)*remaining(x),0));
- const allMonthsTotal=open.reduce((s,x)=>s+(+x.amount||0)*remaining(x),0);
- const allMonthsEl=$('instAllMonthsTotal');if(allMonthsEl)allMonthsEl.textContent=money(allMonthsTotal);
  $('installmentRows').innerHTML=all.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.current)}/${esc(x.total)}</td><td class="amount">${money(x.amount)}</td><td><button class="secondary" style="padding:5px 7px;font-size:12px" onclick="editInstallment('${x.id}')">Editar</button><button class="danger" style="padding:5px 7px;font-size:12px;margin-left:4px" onclick="removeInstallment('${x.id}')">×</button></td></tr>`).join('');
  $('emptyInstallments').classList.toggle('hide',all.length>0);
  const maxMonths=Math.max(0,...open.map(remaining));
@@ -360,7 +238,7 @@ function renderInstallments(){
  if(!maxMonths){buttons.innerHTML='';details.innerHTML='<div class="sub">Não há parcelas futuras cadastradas.</div>';return;}
  selectedInstallmentMonth=Math.min(selectedInstallmentMonth,maxMonths-1);
  const names=[];
- for(let i=0;i<maxMonths;i++){const d=new Date(2026,9+i,1);names.push(d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase()));}
+ for(let i=0;i<maxMonths;i++){const d=new Date(2026,11+i,1);names.push(d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase()));}
  buttons.innerHTML=names.map((n,i)=>`<button type="button" class="secondary ${i===selectedInstallmentMonth?'active':''}" data-month="${i}">${esc(n)}</button>`).join('');
  const draw=idx=>{
   selectedInstallmentMonth=idx;
@@ -373,7 +251,7 @@ function renderInstallments(){
  draw(selectedInstallmentMonth);
 }
 function initMonths(){
- let sel=$('monthFilter'),now=new Date(),current=state.month||financeMonthNow(),currentYear=Number(current.slice(0,4));
+ let sel=$('monthFilter'),now=new Date(),current=monthNow(),currentYear=now.getFullYear();
  let hist=state.history||{}, keys=Object.keys(hist).filter(k=>k<=current).sort();
  if(!keys.includes(current))keys.push(current);
  let years=[...new Set(keys.map(k=>k.slice(0,4)))].sort();
@@ -382,87 +260,30 @@ function initMonths(){
  $('selectedMonthLabel').textContent=sel.options[sel.selectedIndex]?.text||'';
 }
 function renderChart(){
- const year=String(new Date().getFullYear());
- if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
+ if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+new Date().getFullYear();
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=(state.month||financeMonthNow()));
- const current=state.month||financeMonthNow();
- if(!keys.includes(current))keys.push(current);
- keys.sort().reverse();
- const months=keys.map(key=>{
-  const isCurrent=key===current;
-  const record=hist[key]||{};
-  const incomeBase=isCurrent?(state.incomes||[]).reduce((sum,x)=>sum+(+x.amount||0),0):(+record.income||0);
-  const income=incomeBase+(isCurrent?(+state.accountBalance||0):0);
-  const expenses=isCurrent?(state.expenses||[]).reduce((sum,x)=>sum+(+x.amount||0),0):(+record.expenses||0);
-  const balance=income-expenses;
-  const [y,m]=key.split('-').map(Number);
-  const label=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-  return {key,label,year:y,income,expenses,balance,isCurrent};
- }).filter(m=>m.income>0||m.expenses>0);
+ const isCurrent=selected===monthNow();
+ const income=isCurrent?state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.income||0);
+ const expenses=isCurrent?state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.expenses||0);
+ const balance=income-expenses;
+ const [year,month]=selected.split('-').map(Number);
+ const label=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+ const max=Math.max(1,income,expenses);
+ const months=(income>0||expenses>0)?[{label,month:month-1,income,expenses,balance}]:[];
  $('chart').innerHTML=months.length?months.map(m=>{
    const positive=m.balance>=0;
-   const max=Math.max(1,m.income,m.expenses);
-   const incomeLabel=m.isCurrent?'Receitas + saldo da conta':'Entradas';
-   return `<div class="month-row" data-month="${m.key}" title="${m.label}/${m.year}" style="${m.key===selected?'border:1px solid var(--green);border-radius:10px;padding:9px;background:rgba(57,214,160,.05)':''}">
-     <div class="month-row-head"><strong>${m.label.charAt(0).toUpperCase()+m.label.slice(1)} ${m.year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
-     <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="${incomeLabel}: ${money(m.income)}"></span></div>
+   return `<div class="month-row" title="${label}/${year}">
+     <div class="month-row-head"><strong>${label.charAt(0).toUpperCase()+label.slice(1)} ${year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
+     <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="Entradas: ${money(m.income)}"></span></div>
      <div class="month-track"><span class="month-bar expense-bar" style="width:${m.expenses>0?m.expenses/max*100:0}%" title="Saídas: ${money(m.expenses)}"></span></div>
-     <div class="month-values"><span>${m.isCurrent?'Receitas + conta:':'Entrou:'} ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
+     <div class="month-values"><span>Entrou: ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
    </div>`;
- }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
- const totalBalance=months.reduce((sum,m)=>sum+m.balance,0);
- const totalRow=months.length?`<div class="chart-total-row" style="display:flex;justify-content:center;align-items:center;gap:18px;margin:18px 0 6px;padding:14px 10px;border-top:1px solid var(--line);text-align:center"><strong style="font-size:14px">Saldo total dos meses exibidos</strong><strong style="font-size:20px;color:${totalBalance>=0?'var(--green)':'var(--red)'}">${totalBalance<0?'− ':'+'}${money(Math.abs(totalBalance))}</strong></div>`:'';
- $('chart').insertAdjacentHTML('beforeend',totalRow);
+ }).join(''):'<div class="empty-chart">Ainda não há movimentação para este mês.</div>';
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
-function closeFinanceMonth(){
- const active=state.month||financeMonthNow();
- if(state.history&&state.history[active]){
-  alert('Este período já possui fechamento registrado. Para evitar duplicidade, não foi alterado.');
-  return;
- }
- const income=(state.incomes||[]).reduce((s,x)=>s+(+x.amount||0),0);
- const expenses=(state.expenses||[]).reduce((s,x)=>s+(+x.amount||0),0);
- const next=shiftMonth(active,1);
- const msg='Fechar a competência '+active.split('-').reverse().join('/')+' e iniciar '+next.split('-').reverse().join('/')+'?\\n\\nOs valores atuais serão guardados no histórico. As receitas e despesas serão mantidas para o novo período, com status reiniciado para A receber e A pagar. Os valores e os registros anteriores não serão apagados.';
- if(!confirm(msg))return;
- state.history=state.history||{};
- state.history[active]={income,expenses,balance:income-expenses,closedAt:today(),incomeItems:structuredClone(state.incomes||[]),expenseItems:structuredClone(state.expenses||[])};
- state.incomes=(state.incomes||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A receber'}));
- state.expenses=(state.expenses||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A pagar'}));
- state.month=next;
- state.lastClosedMonth=active;
- save();
- initMonths();
- render();
- alert('Competência encerrada. O novo período '+next.split('-').reverse().join('/')+' está pronto para os próximos lançamentos.');
-}
-$('closeFinanceMonthBtn').addEventListener('click',closeFinanceMonth);
-function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;const forecastIncome=state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0),forecastExpenses=state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0),forecastBalance=forecastIncome-forecastExpenses;
-
-const setText=(id,value)=>{const el=$(id);if(el)el.textContent=value};setText('receivableMetric',money(receivable));setText('incomeMetric',money(got));setText('fixedExpensesMetric',money(fixedExpenses));setText('cardExpensesMetric',money(cardExpenses));setText('totalExpensesMetric',money(totalExpenses));setText('balanceMetric',money(got-paid));const accountInput=$('accountBalanceInput');if(accountInput&&document.activeElement!==accountInput)accountInput.value=state.accountBalance==null?'':numberBR(+state.accountBalance||0);setText('combinedBalanceMetric',money((+state.accountBalance||0)+forecastBalance));setText('balanceIncomeDetail',money(got));setText('balanceExpenseDetail',money(paid));setText('forecastBalanceDetail',money(forecastBalance));const forecastEl=$('forecastBalanceDetail');if(forecastEl)forecastEl.className='metric '+(forecastBalance>=0?'positive':'negative');const balance=$('balanceMetric');if(balance){balance.classList.toggle('negative',got-paid<0);balance.className='metric '+(got>=paid?'positive':'negative')}setText('openMetric',money(state.incomes.filter(x=>x.status==='A receber'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)+state.expenses.filter(x=>x.status==='A pagar'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)))}
-
-function saveAccountBalance(){const input=$('accountBalanceInput');const raw=input.value.trim();if(!raw){state.accountBalance=0;save();return}const amount=parseBR(raw);if(!Number.isFinite(amount)||amount<0){alert('Informe um saldo válido, igual ou maior que zero.');input.value=numberBR(+state.accountBalance||0);return}state.accountBalance=Math.round(amount*100)/100;save();}
-$('accountBalanceInput').addEventListener('change',saveAccountBalance);
-$('accountBalanceInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveAccountBalance();e.currentTarget.blur();}});
-$('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;function bulkSetStatus(kind){
- const source=kind==='cards'?'expenses':kind;
- const arr=state[source]||[];
- const isCard=x=>source==='expenses'&&isCardExpense(x);
- const targets=source==='incomes'?arr:(kind==='expenses'?arr.filter(x=>!isCard(x)):arr.filter(isCard));
- if(!targets.length){alert('Não há lançamentos nesta seção para alterar.');return}
- const done=kind==='incomes'?'Recebido':'Pago',open=kind==='incomes'?'A receber':'A pagar';
- const next=targets.every(x=>x.status===done)?open:done;
- const label=kind==='incomes'?'receitas':(kind==='expenses'?'despesas fixas':'despesas cartões');
- if(!confirm('Deseja alterar o status de todos os itens de '+label+' para "'+next+'"? Os status individuais serão substituídos.'))return;
- targets.forEach(x=>x.status=next);save();
-}
-$('bulkIncomeBtn').onclick=()=>bulkSetStatus('incomes');
-$('bulkExpenseBtn').onclick=()=>bulkSetStatus('expenses');
-$('bulkCardBtn').onclick=()=>bulkSetStatus('cards');
-
+function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;$('receivableMetric').textContent=money(receivable);$('incomeMetric').textContent=money(got);$('fixedExpensesMetric').textContent=money(fixedExpenses);$('cardExpensesMetric').textContent=money(cardExpenses);$('totalExpensesMetric').textContent=money(totalExpenses);$('balanceMetric').textContent=money(got-paid);$('balanceIncomeDetail').textContent=money(got);$('balanceExpenseDetail').textContent=money(paid);$('balanceMetric').classList.toggle('negative',got-paid<0);$('balanceMetric').className='metric '+(got>=paid?'positive':'negative');$('openMetric').textContent=money(state.incomes.filter(x=>x.status==='A receber'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)+state.expenses.filter(x=>x.status==='A pagar'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0))}
+$('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;
 function addCardExpense(){let name=prompt('Nome do cartão (ex.: Cartão novo):');if(!name||!name.trim())return;let raw=prompt('Valor da despesa prevista em R$:','0,00');if(raw===null)return;let amount=Number(raw.trim().replace(/\./g,'').replace(',','.'));if(!Number.isFinite(amount)||amount<0){alert('Informe um valor válido.');return}state.expenses.push({id:crypto.randomUUID(),name:name.trim(),amount,status:'A pagar',category:'card'});save()}
 $('saveCard').onclick=()=>{state.card={...state.card,spent:Math.max(0,parseBR($('cardSpentMetric').value)),limit:Math.max(0,parseBR($('cardLimitMetric').value))};save()};$('cardSpentMetric').addEventListener('change',()=>{$('saveCard').click()});$('cardLimitMetric').addEventListener('change',()=>{$('saveCard').click()});
 $('installmentForm').onsubmit=e=>{e.preventDefault();let current=+$('instCurrent').value,total=+$('instTotal').value;if(current>total){alert('A parcela atual não pode ser maior que o total.');return}state.installments.push({id:crypto.randomUUID(),name:$('instDesc').value.trim(),card:$('instCard').value,amount:+$('instAmount').value,current,total});e.target.reset();$('instCurrent').value=1;$('instTotal').value=1;save()};
@@ -470,100 +291,13 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.query
 $('exportBtn').onclick=()=>download('backup-financas-jose.json',JSON.stringify(state,null,2),'application/json');$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.incomes)||!Array.isArray(d.expenses))throw Error();state=d;save();alert('Backup importado com sucesso.')}catch{alert('Arquivo inválido ou incompatível.')}e.target.value=''};
 $('exportCsv').onclick=()=>{let rows=[['Tipo','Nome','Valor','Situação'],...state.incomes.map(x=>['Entrada',x.name,x.amount,x.status]),...state.expenses.map(x=>['Despesa',x.name,x.amount,x.status])];download('previsoes-financas-jose.csv','\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n'),'text/csv;charset=utf-8')};
 function download(name,content,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
-if($('clearData'))$('clearData').onclick=()=>{if(confirm('Apagar todas as previsões e ajustes salvos neste navegador?')){localStorage.removeItem('finjose_v2');location.reload()}}
-
-/* Controle Forex por mês */
-const forexNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-let forexSelectedMonth=String(new Date().getMonth()+1).padStart(2,'0');
-function forexKey(){return $('forexYear').value+'-'+forexSelectedMonth}
-function forexData(){if(!state.forex||typeof state.forex!=='object')state.forex={};return state.forex}
-function forexMoney(v){return 'US$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function forexPreviousKey(){
- const [yy,mm]=forexKey().split('-').map(Number);
- const d=new Date(yy,mm-2,1);
- return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-}
-function forexRecord(key){
- const all=forexData();
- if(all[key])return all[key];
- const prev=all[forexPreviousKeyFor(key)];
- if(prev)return {initial:Number(prev.balance)||0,deposits:0,withdrawals:0,balance:Number(prev.balance)||0,autoStart:true};
- return {initial:0,deposits:0,withdrawals:0,balance:0};
-}
-function forexPreviousKeyFor(key){const [yy,mm]=key.split('-').map(Number);const d=new Date(yy,mm-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
-function renderForex(){
- const y=$('forexYear').value||String(new Date().getFullYear());
- $('forexMonthButtons').innerHTML=forexNames.map((n,i)=>{const m=String(i+1).padStart(2,'0');return '<button type="button" class="'+(m===forexSelectedMonth?'active':'secondary')+'" data-forex-month="'+m+'">'+n+'</button>'}).join('');
- const key=y+'-'+forexSelectedMonth,all=forexData();
- if(!all[key]){
-  const prev=all[forexPreviousKeyFor(key)];
-  if(prev)all[key]={initial:Number(prev.balance)||0,deposits:0,withdrawals:0,balance:Number(prev.balance)||0,autoStart:true};
-  else all[key]={initial:0,deposits:0,withdrawals:0,balance:0};
- }
- const rec=all[key];
- $('forexMonthTitle').textContent=forexNames[Number(forexSelectedMonth)-1]+' '+y;
- $('forexBalance').value=Number(rec.balance||0).toFixed(2);
- const base=Number(rec.initial||0),deposits=Number(rec.deposits||0),withdrawals=Number(rec.withdrawals||0),balance=Number(rec.balance||0);
- const reference=base+deposits-withdrawals,profit=balance-base-deposits+withdrawals,pct=(base+deposits)>0?profit/(base+deposits)*100:0;
- $('forexInvestedMetric').textContent=forexMoney(reference);$('forexBalanceMetric').textContent=forexMoney(balance);$('forexProfitMetric').textContent=forexMoney(profit);$('forexReturnMetric').textContent=pct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
- $('forexProfitMetric').className='metric '+(profit<0?'negative':'positive');$('forexReturnMetric').className='metric '+(profit<0?'negative':'positive');$('forexBalanceMetric').className='metric '+(balance<reference?'negative':'positive');
- $('forexMoveNote').textContent='Saldo inicial automático do mês: '+forexMoney(base)+'. Aportes: '+forexMoney(deposits)+' · Retiradas: '+forexMoney(withdrawals)+'.';
- renderForexAnnual(Number(y));
-}
-function renderForexAnnual(year){
- const all=forexData(),selectedMonth=Number(forexSelectedMonth)||new Date().getMonth()+1;
- const keys=forexNames.map((n,i)=>year+'-'+String(i+1).padStart(2,'0'));
- let annualProfit=0,annualNetCapital=0,lastBalance=0,hasLastBalance=false,baseCounted=false;
- const points=keys.map((key,i)=>{
-  const r=all[key];if(!r)return {month:forexNames[i].slice(0,3),balance:null,profit:0,capital:0};
-  const initial=Number(r.initial)||0,deposits=Number(r.deposits)||0,withdrawals=Number(r.withdrawals)||0,balance=Number(r.balance)||0;
-  const profit=balance-initial-deposits+withdrawals;
-  const isUpToSelectedMonth=i+1<=selectedMonth;
-  // No resumo anual, o capital inicial entra uma única vez; aportes/retiradas são somados mês a mês.
-  if(isUpToSelectedMonth){
-   if(!baseCounted && initial!==0){annualNetCapital+=initial;baseCounted=true;}
-   annualNetCapital+=deposits-withdrawals;
-   annualProfit+=profit;
-   // O saldo do resumo é o último saldo até o mês selecionado, não saldos automáticos de meses futuros.
-   if(initial!==0||deposits!==0||withdrawals!==0||balance!==0){lastBalance=balance;hasLastBalance=true;}
-  }
-  // Não desenhar valores projetados de meses posteriores ao mês selecionado.
-  return {month:forexNames[i].slice(0,3),balance:i+1<=selectedMonth?balance:null,profit,capital:(baseCounted?0:initial)+deposits-withdrawals};
- });
- const returnPct=annualNetCapital>0?annualProfit/annualNetCapital*100:0;
- $('forexAnnualProfit').textContent=forexMoney(annualProfit);
- $('forexAnnualReturn').textContent=returnPct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
- $('forexAnnualBalance').textContent=forexMoney(hasLastBalance?lastBalance:0);
- $('forexAnnualCapital').textContent=forexMoney(annualNetCapital);
- $('forexAnnualProfit').className='metric '+(annualProfit<0?'negative':'positive');
- $('forexAnnualReturn').className='metric '+(annualProfit<0?'negative':'positive');
- const chart=$('forexAnnualChart'),vals=points.filter(p=>p.balance!==null).map(p=>p.balance),max=Math.max(1,...vals);
- chart.innerHTML=points.map(p=>{
-  if(p.balance===null)return '<div style="text-align:center;min-width:0"><div style="height:96px;display:flex;align-items:end;justify-content:center"><div style="width:70%;height:3px;border-radius:4px;background:var(--border,#2b3b51)"></div></div><div style="font-size:11px;color:var(--muted,#9eb0c7);margin-top:5px">'+p.month+'</div></div>';
-  const h=Math.max(5,Math.round(p.balance/max*96));
-  return '<div title="'+p.month+': '+forexMoney(p.balance)+'" style="text-align:center;min-width:0"><div style="height:96px;display:flex;align-items:end;justify-content:center"><div style="width:70%;height:'+h+'px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#39d6a0,#3b82f6)"></div></div><div style="font-size:11px;color:var(--muted,#9eb0c7);margin-top:5px">'+p.month+'</div><div style="font-size:9px;color:var(--text,#edf3fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.balance.toFixed(0)+'</div></div>';
- }).join('');
-}
-function forexSave(){save();renderForex()}
-function forexMove(type){
- const amount=Number($('forexMoveAmount').value)||0;if(amount<=0){alert('Informe um valor maior que zero.');return}
- const rec=forexData()[forexKey()]||{initial:0,deposits:0,withdrawals:0,balance:0};
- if(type==='deposit'){rec.deposits=(Number(rec.deposits)||0)+amount;rec.balance=(Number(rec.balance)||0)+amount}
- else {if(amount>Number(rec.balance||0)){alert('A retirada não pode ser maior que o saldo atual registrado. Atualize o saldo da conta primeiro, se necessário.');return}rec.withdrawals=(Number(rec.withdrawals)||0)+amount;rec.balance=(Number(rec.balance)||0)-amount}
- forexData()[forexKey()]=rec;$('forexMoveAmount').value='';forexSave();$('forexMoveNote').textContent=(type==='deposit'?'Aporte':'Retirada')+' de '+forexMoney(amount)+' registrado.';
-}
-$('forexYear').innerHTML=[...new Set([new Date().getFullYear()-1,new Date().getFullYear(),new Date().getFullYear()+1])].map(y=>'<option value="'+y+'">'+y+'</option>').join('');$('forexYear').value=String(new Date().getFullYear());
-$('forexMonthButtons').addEventListener('click',e=>{const b=e.target.closest('[data-forex-month]');if(!b)return;forexSelectedMonth=b.dataset.forexMonth;renderForex()});
-$('forexDepositBtn').addEventListener('click',()=>forexMove('deposit'));$('forexWithdrawBtn').addEventListener('click',()=>forexMove('withdraw'));
-$('forexSaveBalance').addEventListener('click',()=>{const rec=forexData()[forexKey()]||{initial:0,deposits:0,withdrawals:0,balance:0};rec.balance=Math.max(0,Number($('forexBalance').value)||0);forexData()[forexKey()]=rec;forexSave();alert('Saldo atual salvo.')});
-$('forexYear').addEventListener('change',renderForex);
-
-initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();renderForex();
+$('clearData').onclick=()=>{if(confirm('Apagar todas as previsões e ajustes salvos neste navegador?')){localStorage.removeItem('finjose_v2');location.reload()}}
+initMonths();$('monthFilter').addEventListener('change',()=>renderChart());render();
 
 
 
 // Exportação com retorno visível na própria página (não depende de pop-up ou html2canvas).
-if($('captureShareBtn'))$('captureShareBtn').addEventListener('click',()=>{
+$('captureShareBtn').addEventListener('click',()=>{
   const btn=$('captureShareBtn');
   let result=document.getElementById('captureResult');
   if(!result){
@@ -621,31 +355,4 @@ if($('captureShareBtn'))$('captureShareBtn').addEventListener('click',()=>{
   }finally{btn.disabled=false;}
 });
 
-</script>
-<script>
-const FIN_SUPABASE_URL='https://zxdnyadoouqfmfptypae.supabase.co';
-const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
-const FIN_SYNC_URL=FIN_SUPABASE_URL+'/functions/v1/financeiro-device-sync';
-const cloudGate=document.getElementById('cloudGate');
-const cloudStatus=document.getElementById('cloudStatus');
-function cloudMessage(msg){if(cloudStatus)cloudStatus.textContent=String(msg||'');}
-function showCloudSyncProblem(msg){const b=document.getElementById('cloudSyncBanner');const t=document.getElementById('cloudSyncBannerText');if(t)t.textContent=msg;if(b)b.style.display='flex';}
-function syncToken(){return localStorage.getItem('finjose_sync_device_token')||'';}
-async function syncApi(body,token){const h={'Content-Type':'application/json','apikey':FIN_SUPABASE_KEY};if(token)h['x-device-token']=token;const res=await fetch(FIN_SYNC_URL,{method:'POST',headers:h,body:JSON.stringify(body)});const data=await res.json().catch(()=>({error:'Resposta inválida do servidor.'}));if(!res.ok){const err=new Error(data.error||'Falha na sincronização');err.status=res.status;throw err;}return data;}
-function setSyncReady(revision){deviceSyncRevision=Number(revision)||0;deviceSyncReady=true;deviceSyncConflict=false;cloudGate.style.display='none';const b=document.getElementById('cloudSyncBanner');if(b)b.style.display='none';cloudMessage('Dispositivo conectado. Sincronização automática ativada.');}
-async function pullDeviceState(){const data=await syncApi({op:'pull'},syncToken());if(data.state&&state.competenceShiftVersion===1&&data.state.competenceShiftVersion!==1){deviceSyncRevision=Number(data.revision)||0;await queueDevicePush();return data;}if(data.state&&data.revision>deviceSyncRevision){if(deviceSyncBusy){deviceSyncConflict=true;showCloudSyncProblem('Alterações simultâneas detectadas. Sincronização pausada para evitar perda de dados.');return;}state=data.state;if(!state.history)state.history={};localStorage.setItem('finjose_v2',JSON.stringify(state));render();deviceSyncRevision=data.revision;cloudMessage('Dados atualizados recebidos da nuvem.');}return data;}
-async function queueDevicePush(){if(!deviceSyncReady||deviceSyncConflict)return;const snapshot=JSON.parse(JSON.stringify(state));cloudSyncQueue=cloudSyncQueue.then(async()=>{if(!deviceSyncReady||deviceSyncConflict)return;deviceSyncBusy=true;try{const out=await syncApi({op:'push',state:snapshot,expected_revision:deviceSyncRevision},syncToken());deviceSyncRevision=out.revision;cloudMessage('Alterações salvas e sincronizadas.');}catch(err){if(err.status===409){deviceSyncConflict=true;showCloudSyncProblem('Conflito: o outro aparelho alterou os dados. Sincronização pausada para evitar sobrescrita.');}else{showCloudSyncProblem('Salvo neste aparelho; falha na nuvem: '+err.message);}}finally{deviceSyncBusy=false;}});return cloudSyncQueue;}
-async function createPair(){const btn=document.getElementById('createPairBtn');btn.disabled=true;try{const prior=localStorage.getItem('finjose_v2');if(prior)localStorage.setItem('finjose_v2_before_pair_'+new Date().toISOString().replace(/[:.]/g,'-'),prior);const out=await syncApi({op:'create_pair'});localStorage.setItem('finjose_sync_device_token',out.token);deviceSyncReady=true;deviceSyncRevision=0;await queueDevicePush();document.getElementById('pairCodeValue').textContent=out.code;document.getElementById('pairCodeBox').style.display='block';cloudMessage('Código criado. Mantenha esta tela aberta e conecte o celular.');}catch(err){cloudMessage('Erro ao preparar o computador: '+err.message);}finally{btn.disabled=false;}}
-async function joinPair(){const btn=document.getElementById('joinPairBtn');btn.disabled=true;try{const code=document.getElementById('pairCodeInput').value.trim().toUpperCase();const prior=localStorage.getItem('finjose_v2');if(prior)localStorage.setItem('finjose_v2_before_pair_'+new Date().toISOString().replace(/[:.]/g,'-'),prior);const out=await syncApi({op:'join_pair',code:code});localStorage.setItem('finjose_sync_device_token',out.token);deviceSyncReady=true;deviceSyncRevision=0;const snap=await pullDeviceState();if(snap.state){setSyncReady(snap.revision);cloudMessage('Celular conectado e dados recebidos do computador.');}else{deviceSyncReady=false;cloudMessage('Pareamento feito; aguardando a primeira cópia do computador.');}}catch(err){cloudMessage('Erro ao conectar celular: '+err.message);}finally{btn.disabled=false;}}
-async function reconnectCloud(){const token=syncToken();if(!token){cloudGate.style.display='flex';cloudMessage('No PC, gere um código. No celular, use o código do PC.');return;}try{const snap=await syncApi({op:'pull'},token);if(snap.state){setSyncReady(snap.revision);await pullDeviceState();}else{deviceSyncReady=true;deviceSyncRevision=0;cloudMessage('Dispositivo autorizado; aguardando dados iniciais.');}}catch(err){deviceSyncReady=false;showCloudSyncProblem('Sincronização indisponível: '+err.message);}}
-document.getElementById('createPairBtn').addEventListener('click',createPair);
-document.getElementById('joinPairBtn').addEventListener('click',joinPair);
-document.getElementById('closeCloudGate').addEventListener('click',()=>cloudGate.style.display='none');
-document.getElementById('cloudReconnectBtn').addEventListener('click',reconnectCloud);
-const manual=document.getElementById('cloudManualLoginBtn');if(manual)manual.addEventListener('click',()=>cloudGate.style.display='flex');
-window.addEventListener('online',reconnectCloud);
-reconnectCloud();
-setInterval(()=>{if(deviceSyncReady&&!deviceSyncConflict&&!deviceSyncBusy)pullDeviceState().catch(err=>showCloudSyncProblem('Falha ao receber atualização: '+err.message));},5000);
-</script>
-</body></html>
-
+</script></body></html>
