@@ -158,7 +158,27 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div class="table-wrap" style="margin-top:14px"><table class="installment-table"><thead><tr><th>Compra</th><th>Parcela</th><th>Valor</th><th></th></tr></thead><tbody id="installmentRows"></tbody></table></div><div id="emptyInstallments" class="empty">Nenhuma parcela cadastrada.</div><div id="installmentMonthButtons" class="month-buttons"></div>
 <div id="installmentMonthDetails" class="month-details"><div class="sub">Selecione um mês para ver as compras previstas.</div></div>
 </section>
-<section class="section panel" id="settings"><h2>Dados e backup</h2><p class="sub">Backup e importação ficam aqui para não ocupar espaço no topo da tela.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px"><button id="exportBtn" class="secondary">Exportar backup</button><button id="importBtn" class="secondary">Importar backup</button><input id="importFile" type="file" accept=".json" class="hide"><button id="exportCsv" class="secondary">Exportar previsões CSV</button></div><div class="notice">Os dados ficam salvos neste navegador. Para sincronizar celular e computador será necessário banco de dados com autenticação. Não coloque informações bancárias sensíveis no repositório público.</div><button id="clearData" class="danger" style="margin-top:15px">Apagar dados locais</button></section>
+<section class="section panel" id="settings"><h2>Dados e backup</h2><p class="sub">Backup, importação e sincronização entre PC e celular.</p>
+<div id="syncPanel" style="margin:14px 0;padding:14px;border:1px solid #426079;border-radius:14px;background:#101d2d">
+<strong>Sincronização entre dispositivos</strong>
+<div id="syncStatus" role="status" aria-live="polite" class="sub" style="margin:8px 0 12px">Verificando vínculo deste aparelho…</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button id="syncPublishLocalBtn" type="button">Enviar dados deste PC para a nuvem</button>
+<button id="syncPullCloudBtn" type="button" class="secondary">Receber dados da nuvem</button>
+<button id="syncCreatePairBtn" type="button" class="secondary">Gerar código para conectar outro aparelho</button>
+</div>
+<div id="syncPairBox" style="display:none;margin-top:12px;padding:12px;border:1px solid #39d6a0;border-radius:10px;text-align:center">
+<div class="sub">Código de pareamento · válido por 10 minutos</div><div id="syncPairCode" style="font-size:27px;font-weight:900;letter-spacing:3px;color:#39d6a0;margin:8px"></div><div class="sub">No celular, informe este código em “Conectar celular”.</div>
+</div>
+<div style="margin-top:14px;border-top:1px solid #344860;padding-top:12px">
+<label for="syncPairInput" class="sub" style="display:block;margin-bottom:6px">Conectar celular usando o código gerado no PC</label>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="syncPairInput" inputmode="text" autocomplete="off" maxlength="16" placeholder="Código de 16 caracteres" style="flex:1;min-width:180px;background:#0c1524;color:var(--text);border:1px solid #31445c;border-radius:10px;padding:11px"><button id="syncJoinPairBtn" type="button" class="secondary">Conectar celular</button></div>
+</div>
+<p class="sub" style="margin:12px 0 0">Primeiro, no PC que contém os dados corretos, use “Enviar dados deste PC para a nuvem”. Depois, no celular, use “Receber dados da nuvem”. Os dados locais são preservados em backup antes de qualquer substituição.</p>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px"><button id="exportBtn" class="secondary">Exportar backup</button><button id="importBtn" class="secondary">Importar backup</button><input id="importFile" type="file" accept=".json" class="hide"><button id="exportCsv" class="secondary">Exportar previsões CSV</button></div>
+<div class="notice">Os dados financeiros são armazenados localmente e sincronizados por conexão segura com o serviço do projeto. Não compartilhe códigos de pareamento com terceiros.</div>
+<button id="clearData" class="danger" style="margin-top:15px">Apagar dados locais</button></section>
 </div>
 
 </div>
@@ -207,7 +227,7 @@ if(state.month && state.month!==currentMonthKey){
 state.month=currentMonthKey;
 (state.incomes||[]).forEach(x=>{if(x.status==='Previsto')x.status='A receber';});
 (state.expenses||[]).forEach(x=>{if(x.status==='Previsto')x.status='A pagar';});
-function save(){localStorage.setItem('finjose_v2',JSON.stringify(state));render()}
+function save(){localStorage.setItem('finjose_v2',JSON.stringify(state));render();if(typeof queueDevicePush==='function')queueDevicePush()}
 
 function isCardExpense(x){let cardNames=['SICREDI - 03','Inter - 07','Nubank','Amazon (Bradesco) - 05','Mercado Pago'];return x.category==='card'||cardNames.some(n=>String(x.name).toLowerCase().startsWith(n.toLowerCase()))}
 function renderPlans(kind){let arr=state[kind],root=$(kind==='incomes'?'incomePlanRows':'expensePlanRows');let isCard=x=>kind==='expenses'&&isCardExpense(x);let main=kind==='expenses'?arr.filter(x=>!isCard(x)):arr;let cards=kind==='expenses'?arr.filter(isCard):[];function rows(items){return items.map(x=>{let opts=kind==='incomes'?['A receber','Recebido']:['A pagar','Pago'];return `<div class="budget-row"><div class="budget-title"><div title="${esc(x.name)}"><strong>${esc(x.name)}</strong></div><input class="amount-edit" aria-label="Valor ${esc(x.name)}" title="Editar valor" type="number" min="0" step=".01" value="${(+x.amount).toFixed(2)}" onchange="editPlan('${kind}','${x.id}',this.value)"><select aria-label="Situação ${esc(x.name)}" class="status-select" onchange="setPlanStatus('${kind}','${x.id}',this.value)">${opts.map(o=>`<option ${x.status===o?'selected':''}>${o}</option>`).join('')}</select><button class="danger remove-row" title="Remover lançamento" onclick="removePlan('${kind}','${x.id}')">×</button></div></div>`}).join('')}root.innerHTML=rows(main);if(kind==='expenses')$('cardExpenseRows').innerHTML=rows(cards)}
@@ -355,4 +375,125 @@ $('captureShareBtn').addEventListener('click',()=>{
   }finally{btn.disabled=false;}
 });
 
-</script></body></html>
+</script>
+<script>
+/* Sincronização entre dispositivos via Edge Function com token individual por aparelho. */
+const FIN_SUPABASE_URL='https://zxdnyadoouqfmfptypae.supabase.co';
+const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
+const FIN_SYNC_URL=FIN_SUPABASE_URL+'/functions/v1/financeiro-device-sync';
+let finSyncReady=false, finSyncRevision=0, finSyncBusy=false, finSyncDirty=false, finSyncConflict=false, finSyncQueue=Promise.resolve(), finSyncLastPull=0;
+const finSyncStatus=document.getElementById('syncStatus');
+function finSyncMsg(message){if(finSyncStatus)finSyncStatus.textContent=String(message||'');}
+function finSyncToken(){return localStorage.getItem('finjose_sync_device_token')||'';}
+async function finSyncApi(body,token){
+ const headers={'Content-Type':'application/json','apikey':FIN_SUPABASE_KEY};
+ if(token)headers['x-device-token']=token;
+ const response=await fetch(FIN_SYNC_URL,{method:'POST',headers,body:JSON.stringify(body),cache:'no-store'});
+ const data=await response.json().catch(()=>({error:'Resposta inválida do servidor.'}));
+ if(!response.ok){const error=new Error(data.error||'Falha na sincronização.');error.status=response.status;throw error;}
+ return data;
+}
+function finBackupLocal(){
+ try{const current=localStorage.getItem('finjose_v2');if(current)localStorage.setItem('finjose_v2_backup_sync_'+new Date().toISOString().replace(/[:.]/g,'-'),current);}catch(e){}
+}
+function finSetReady(revision){
+ finSyncRevision=Number(revision)||0;finSyncReady=true;finSyncConflict=false;finSyncDirty=false;
+ finSyncMsg('Conectado. Sincronização automática ativada. Última revisão recebida: '+finSyncRevision+'.');
+}
+async function finPublishLocal(){
+ const token=finSyncToken();
+ if(!token){finSyncMsg('Este aparelho ainda não está pareado. Gere um código no PC ou conecte usando o código do PC.');return;}
+ const button=document.getElementById('syncPublishLocalBtn');if(button)button.disabled=true;
+ try{
+  finSyncBusy=true;
+  const latest=await finSyncApi({op:'pull'},token);
+  const snapshot=JSON.parse(JSON.stringify(state));
+  const result=await finSyncApi({op:'push',state:snapshot,expected_revision:Number(latest.revision)||0},token);
+  finSetReady(result.revision);
+  finSyncMsg('Dados deste aparelho publicados na nuvem com sucesso (revisão '+result.revision+'). Os outros aparelhos já podem recebê-los.');
+ }catch(error){
+  if(error.status===409){finSyncConflict=true;finSyncMsg('Houve alteração simultânea. Nada foi sobrescrito. Clique novamente para publicar a versão deste PC após conferir os dados.');}
+  else finSyncMsg('Não foi possível enviar os dados: '+error.message);
+ }finally{finSyncBusy=false;if(button)button.disabled=false;}
+}
+async function finPullCloud(){
+ const token=finSyncToken();
+ if(!token){finSyncMsg('Este aparelho não está pareado. Gere um código no PC e conecte o celular.');return;}
+ const button=document.getElementById('syncPullCloudBtn');if(button)button.disabled=true;
+ try{
+  const result=await finSyncApi({op:'pull'},token);
+  if(!result.state){finSyncMsg('Ainda não há cópia na nuvem. No PC, publique os dados primeiro.');return;}
+  if(!Array.isArray(result.state.incomes)||!Array.isArray(result.state.expenses))throw new Error('A cópia na nuvem está incompleta; os dados locais foram mantidos.');
+  finBackupLocal();
+  state=result.state;if(!state.history)state.history={};
+  localStorage.setItem('finjose_v2',JSON.stringify(state));render();
+  finSetReady(result.revision);
+  finSyncLastPull=Date.now();
+  finSyncMsg('Dados da nuvem recebidos. Este aparelho está atualizado (revisão '+result.revision+').');
+ }catch(error){finSyncMsg('Falha ao receber dados: '+error.message);}
+ finally{if(button)button.disabled=false;}
+}
+function queueDevicePush(){
+ if(!finSyncReady||finSyncConflict||!finSyncToken())return Promise.resolve();
+ finSyncDirty=true;
+ const snapshot=JSON.parse(JSON.stringify(state));
+ finSyncQueue=finSyncQueue.then(async()=>{
+  if(!finSyncReady||finSyncConflict)return;
+  finSyncBusy=true;
+  try{
+   const result=await finSyncApi({op:'push',state:snapshot,expected_revision:finSyncRevision},finSyncToken());
+   finSyncRevision=result.revision;finSyncDirty=false;finSyncLastPull=Date.now();
+   finSyncMsg('Alterações salvas e sincronizadas (revisão '+result.revision+').');
+  }catch(error){
+   if(error.status===409){finSyncConflict=true;finSyncMsg('Conflito de edição detectado. A sincronização foi pausada para evitar perda de dados. Escolha receber a nuvem ou publicar novamente a versão deste aparelho.');}
+   else finSyncMsg('Alterações salvas neste aparelho; falha ao enviar à nuvem: '+error.message);
+  }finally{finSyncBusy=false;}
+ });
+ return finSyncQueue;
+}
+async function finCreatePair(){
+ const button=document.getElementById('syncCreatePairBtn');button.disabled=true;
+ try{
+  const output=await finSyncApi({op:'create_pair'});
+  localStorage.setItem('finjose_sync_device_token',output.token);
+  document.getElementById('syncPairCode').textContent=output.code;
+  document.getElementById('syncPairBox').style.display='block';
+  finSyncReady=false;finSyncRevision=0;
+  await finPublishLocal();
+  finSyncMsg('Este PC foi preparado e os dados locais foram enviados. Código válido por 10 minutos: '+output.code);
+ }catch(error){finSyncMsg('Erro ao preparar pareamento: '+error.message);}
+ finally{button.disabled=false;}
+}
+async function finJoinPair(){
+ const button=document.getElementById('syncJoinPairBtn');button.disabled=true;
+ try{
+  const code=document.getElementById('syncPairInput').value.trim().toUpperCase();
+  const output=await finSyncApi({op:'join_pair',code});
+  localStorage.setItem('finjose_sync_device_token',output.token);
+  finSyncReady=false;finSyncConflict=false;
+  finSyncMsg('Celular pareado. Recebendo os dados do PC…');
+  await finPullCloud();
+ }catch(error){finSyncMsg('Não foi possível conectar: '+error.message);}
+ finally{button.disabled=false;}
+}
+document.getElementById('syncPublishLocalBtn').addEventListener('click',finPublishLocal);
+document.getElementById('syncPullCloudBtn').addEventListener('click',finPullCloud);
+document.getElementById('syncCreatePairBtn').addEventListener('click',finCreatePair);
+document.getElementById('syncJoinPairBtn').addEventListener('click',finJoinPair);
+if(finSyncToken())finSyncMsg('Dispositivo pareado. Para preservar o PC como fonte principal, publique primeiro os dados neste PC. No celular, receba a cópia da nuvem.');
+else finSyncMsg('Este aparelho ainda não está pareado. No PC, gere um código de pareamento para conectar o celular.');
+setInterval(async()=>{
+ if(!finSyncReady||finSyncBusy||finSyncConflict||!finSyncToken())return;
+ try{
+  const data=await finSyncApi({op:'pull'},finSyncToken());
+  if(data.state&&Number(data.revision)>finSyncRevision){
+   if(finSyncDirty){finSyncConflict=true;finSyncMsg('Há dados novos na nuvem e alterações locais pendentes. Sincronização pausada para evitar sobrescrita.');return;}
+   if(!Array.isArray(data.state.incomes)||!Array.isArray(data.state.expenses))return;
+   finBackupLocal();state=data.state;if(!state.history)state.history={};
+   localStorage.setItem('finjose_v2',JSON.stringify(state));render();finSyncRevision=Number(data.revision);finSyncLastPull=Date.now();
+   finSyncMsg('Atualização recebida automaticamente (revisão '+finSyncRevision+').');
+  }
+ }catch(error){finSyncMsg('Sem conexão com a nuvem no momento. Os dados locais continuam preservados.');}
+},7000);
+</script>
+</body></html>
