@@ -175,7 +175,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div class="app">
 <div id="cloudSyncBanner" style="display:none;margin:10px 14px;padding:10px 12px;border:1px solid #42536b;border-radius:10px;background:#142238;color:#dce8f5;font-size:12px;align-items:center;gap:8px;flex-wrap:wrap"><span id="cloudSyncBannerText" style="flex:1;min-width:180px">Sincronização indisponível.</span><button id="cloudReconnectBtn" type="button" style="width:auto;margin:0;padding:8px 10px">Tentar sincronizar</button><button id="cloudManualLoginBtn" type="button" class="secondary" style="width:auto;margin:0;padding:8px 10px">Entrar manualmente</button></div>
 <header class="top"><div class="brand"><div class="logo">R$</div><div><h1>Controle Financeiro José Luiz</h1></div></div></header>
-<div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span></div>
+<div class="period" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span class="sub">Competência financeira</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span><button id="closeFinanceMonthBtn" type="button" class="secondary" style="width:auto;margin:0;padding:9px 12px">Fechar mês e iniciar próximo</button></div>
 <section class="cards">
 <div class="card"><div class="metric-label">Receitas a receber</div><div class="metric positive" id="receivableMetric">R$ 0,00</div><div class="metric-note">Entradas com situação “A receber”</div></div>
 <div class="card" style="display:none" aria-hidden="true"><div class="metric-label">Receitas recebidas</div><div class="metric positive" id="incomeMetric">R$ 0,00</div><div class="metric-note">Entradas confirmadas no período</div></div>
@@ -257,7 +257,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <script>
 const $=id=>document.getElementById(id), money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n)||0);
 const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const monthNow=()=>today().slice(0,7), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const monthNow=()=>today().slice(0,7), shiftMonth=(key,delta)=>{let [y,m]=key.split('-').map(Number);let d=new Date(y,m-1+delta,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}, financeMonthNow=()=>shiftMonth(monthNow(),-1), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const seedIncomes=[
 ['Salário',7000,'Recebido'],['Função Gratificada',2000,'Recebido'],['Abono Prev. Social',1500,'Recebido'],['Vale Refeição',426.92,'Recebido'],['Décimo Terceiro',0,'Previsto'],['Terço de Férias',0,'Previsto'],['Hora Aula',1000,'Previsto'],['Diárias',0,'Previsto'],['Mercado Financeiro',0,'Previsto'],['Ana',0,'Previsto'],['Joás',700,'A receber'],['Ecco Salva',1000,'A receber']];
 const seedExpenses=[
@@ -300,13 +300,19 @@ if(state.sicrediStatementVersion!=='2026-09-cycle20'){
 }
 
 if(!state.history)state.history={};
-const currentMonthKey=monthNow();
-if(state.month && state.month!==currentMonthKey){
- const prevIncome=(state.incomes||[]).reduce((sum,x)=>sum+(+x.amount||0),0);
- const prevExpense=(state.expenses||[]).reduce((sum,x)=>sum+(+x.amount||0),0);
- state.history[state.month]={income:prevIncome,expenses:prevExpense,balance:prevIncome-prevExpense};
+// Migração única: os lançamentos passam a usar competência do mês anterior ao calendário.
+if(state.competenceShiftVersion!==1){
+ const backupKey='finjose_v2_before_competence_shift';
+ if(!localStorage.getItem(backupKey))localStorage.setItem(backupKey,JSON.stringify(state));
+ const shifted={};
+ Object.keys(state.history||{}).forEach(k=>{shifted[shiftMonth(k,-1)]=state.history[k]});
+ state.history=shifted;
+ if(state.month)state.month=shiftMonth(state.month,-1);
+ state.competenceShiftVersion=1;
 }
-state.month=currentMonthKey;
+const currentMonthKey=financeMonthNow();
+if(!state.month)state.month=currentMonthKey;
+// O período ativo é controlado pelo fechamento manual, não pela virada automática do calendário.
 (state.incomes||[]).forEach(x=>{if(x.status==='Previsto')x.status='A receber';});
 (state.expenses||[]).forEach(x=>{if(x.status==='Previsto')x.status='A pagar';});
 let cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncQueue=Promise.resolve();
@@ -360,7 +366,7 @@ function renderInstallments(){
  draw(selectedInstallmentMonth);
 }
 function initMonths(){
- let sel=$('monthFilter'),now=new Date(),current=monthNow(),currentYear=now.getFullYear();
+ let sel=$('monthFilter'),now=new Date(),current=state.month||financeMonthNow(),currentYear=Number(current.slice(0,4));
  let hist=state.history||{}, keys=Object.keys(hist).filter(k=>k<=current).sort();
  if(!keys.includes(current))keys.push(current);
  let years=[...new Set(keys.map(k=>k.slice(0,4)))].sort();
@@ -373,8 +379,8 @@ function renderChart(){
  if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=monthNow());
- const current=monthNow();
+ const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=(state.month||financeMonthNow()));
+ const current=state.month||financeMonthNow();
  if(!keys.includes(current))keys.push(current);
  keys.sort().reverse();
  const months=keys.map(key=>{
@@ -401,6 +407,29 @@ function renderChart(){
  }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
+function closeFinanceMonth(){
+ const active=state.month||financeMonthNow();
+ if(state.history&&state.history[active]){
+  alert('Este período já possui fechamento registrado. Para evitar duplicidade, não foi alterado.');
+  return;
+ }
+ const income=(state.incomes||[]).reduce((s,x)=>s+(+x.amount||0),0);
+ const expenses=(state.expenses||[]).reduce((s,x)=>s+(+x.amount||0),0);
+ const next=shiftMonth(active,1);
+ const msg='Fechar a competência '+active.split('-').reverse().join('/')+' e iniciar '+next.split('-').reverse().join('/')+'?\\n\\nOs valores atuais serão guardados no histórico. As receitas e despesas serão mantidas para o novo período, com status reiniciado para A receber e A pagar. Os valores e os registros anteriores não serão apagados.';
+ if(!confirm(msg))return;
+ state.history=state.history||{};
+ state.history[active]={income,expenses,balance:income-expenses,closedAt:today(),incomeItems:structuredClone(state.incomes||[]),expenseItems:structuredClone(state.expenses||[])};
+ state.incomes=(state.incomes||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A receber'}));
+ state.expenses=(state.expenses||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A pagar'}));
+ state.month=next;
+ state.lastClosedMonth=active;
+ save();
+ initMonths();
+ render();
+ alert('Competência encerrada. O novo período '+next.split('-').reverse().join('/')+' está pronto para os próximos lançamentos.');
+}
+$('closeFinanceMonthBtn').addEventListener('click',closeFinanceMonth);
 function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;const forecastIncome=state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0),forecastExpenses=state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0),forecastBalance=forecastIncome-forecastExpenses;
 
 const setText=(id,value)=>{const el=$(id);if(el)el.textContent=value};setText('receivableMetric',money(receivable));setText('incomeMetric',money(got));setText('fixedExpensesMetric',money(fixedExpenses));setText('cardExpensesMetric',money(cardExpenses));setText('totalExpensesMetric',money(totalExpenses));setText('balanceMetric',money(got-paid));const accountInput=$('accountBalanceInput');if(accountInput&&document.activeElement!==accountInput)accountInput.value=state.accountBalance==null?'':numberBR(+state.accountBalance||0);setText('combinedBalanceMetric',money((+state.accountBalance||0)+got-paid));setText('balanceIncomeDetail',money(got));setText('balanceExpenseDetail',money(paid));setText('forecastBalanceDetail',money(forecastBalance));const forecastEl=$('forecastBalanceDetail');if(forecastEl)forecastEl.className='metric '+(forecastBalance>=0?'positive':'negative');const balance=$('balanceMetric');if(balance){balance.classList.toggle('negative',got-paid<0);balance.className='metric '+(got>=paid?'positive':'negative')}setText('openMetric',money(state.incomes.filter(x=>x.status==='A receber'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)+state.expenses.filter(x=>x.status==='A pagar'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)))}
