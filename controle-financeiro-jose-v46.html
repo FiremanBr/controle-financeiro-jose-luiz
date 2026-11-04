@@ -480,10 +480,27 @@ document.getElementById('syncPublishLocalBtn').addEventListener('click',finPubli
 document.getElementById('syncPullCloudBtn').addEventListener('click',finPullCloud);
 document.getElementById('syncCreatePairBtn').addEventListener('click',finCreatePair);
 document.getElementById('syncJoinPairBtn').addEventListener('click',finJoinPair);
-if(finSyncToken())finSyncMsg('Dispositivo pareado. Para preservar o PC como fonte principal, publique primeiro os dados neste PC. No celular, receba a cópia da nuvem.');
-else finSyncMsg('Este aparelho ainda não está pareado. No PC, gere um código de pareamento para conectar o celular.');
+async function finAutoConnect(){
+ const token=finSyncToken();
+ if(!token){finSyncMsg('Este aparelho ainda não está pareado. O pareamento é necessário apenas uma vez.');return;}
+ try{
+  finSyncMsg('Conectando e verificando a sincronização automática…');
+  const initial=await finSyncApi({op:'pull'},token);
+  if(initial.is_primary){
+   // O primeiro dispositivo pareado é a fonte principal: publica seu estado local na inicialização.
+   await finPublishLocal();
+  }else if(initial.state){
+   await finPullCloud();
+  }else{
+   finSyncMsg('Aguardando a primeira publicação do computador principal…');
+  }
+ }catch(error){finSyncMsg('Não foi possível conectar à nuvem: '+error.message+'. Os dados locais permanecem preservados.');}
+}
+finAutoConnect();
 setInterval(async()=>{
- if(!finSyncReady||finSyncBusy||finSyncConflict||!finSyncToken())return;
+ if(!finSyncToken())return;
+ if(!finSyncReady){await finAutoConnect();return;}
+ if(finSyncBusy||finSyncConflict)return;
  try{
   const data=await finSyncApi({op:'pull'},finSyncToken());
   if(data.state&&Number(data.revision)>finSyncRevision){
