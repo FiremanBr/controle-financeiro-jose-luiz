@@ -369,29 +369,35 @@ function initMonths(){
  $('selectedMonthLabel').textContent=sel.options[sel.selectedIndex]?.text||'';
 }
 function renderChart(){
- if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+new Date().getFullYear();
+ const year=String(new Date().getFullYear());
+ if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const isCurrent=selected===monthNow();
- const incomeBase=isCurrent?state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.income||0);
- const income=incomeBase+(isCurrent?(+state.accountBalance||0):0);
- const expenses=isCurrent?state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.expenses||0);
- const balance=income-expenses;
- const incomeLabel=isCurrent?'Receitas + saldo da conta':'Entradas';
- const [year,month]=selected.split('-').map(Number);
- const label=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
- const max=Math.max(1,income,expenses);
- const months=(income>0||expenses>0)?[{label,month:month-1,income,expenses,balance}]:[];
+ const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=monthNow()).sort();
+ const current=monthNow();
+ if(!keys.includes(current))keys.push(current);
+ const months=keys.map(key=>{
+  const isCurrent=key===current;
+  const record=hist[key]||{};
+  const incomeBase=isCurrent?(state.incomes||[]).reduce((sum,x)=>sum+(+x.amount||0),0):(+record.income||0);
+  const income=incomeBase+(isCurrent?(+state.accountBalance||0):0);
+  const expenses=isCurrent?(state.expenses||[]).reduce((sum,x)=>sum+(+x.amount||0),0):(+record.expenses||0);
+  const balance=income-expenses;
+  const [y,m]=key.split('-').map(Number);
+  const label=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+  return {key,label,year:y,income,expenses,balance,isCurrent};
+ }).filter(m=>m.income>0||m.expenses>0);
  $('chart').innerHTML=months.length?months.map(m=>{
    const positive=m.balance>=0;
-   return `<div class="month-row" title="${label}/${year}">
-     <div class="month-row-head"><strong>${label.charAt(0).toUpperCase()+label.slice(1)} ${year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
+   const max=Math.max(1,m.income,m.expenses);
+   const incomeLabel=m.isCurrent?'Receitas + saldo da conta':'Entradas';
+   return `<div class="month-row" data-month="${m.key}" title="${m.label}/${m.year}" style="${m.key===selected?'border:1px solid var(--green);border-radius:10px;padding:9px;background:rgba(57,214,160,.05)':''}">
+     <div class="month-row-head"><strong>${m.label.charAt(0).toUpperCase()+m.label.slice(1)} ${m.year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
      <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="${incomeLabel}: ${money(m.income)}"></span></div>
      <div class="month-track"><span class="month-bar expense-bar" style="width:${m.expenses>0?m.expenses/max*100:0}%" title="Saídas: ${money(m.expenses)}"></span></div>
-     <div class="month-values"><span>${isCurrent?'Receitas + conta:':'Entrou:'} ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
-
+     <div class="month-values"><span>${m.isCurrent?'Receitas + conta:':'Entrou:'} ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
    </div>`;
- }).join(''):'<div class="empty-chart">Ainda não há movimentação para este mês.</div>';
+ }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
 function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;const forecastIncome=state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0),forecastExpenses=state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0),forecastBalance=forecastIncome-forecastExpenses;
