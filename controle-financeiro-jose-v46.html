@@ -406,6 +406,9 @@ function renderChart(){
      <div class="month-values"><span>${m.isCurrent?'Receitas + conta:':'Entrou:'} ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
    </div>`;
  }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
+ const totalBalance=months.reduce((sum,m)=>sum+m.balance,0);
+ const totalRow=months.length?`<div class="chart-total-row" style="display:flex;justify-content:center;align-items:center;gap:18px;margin:18px 0 6px;padding:14px 10px;border-top:1px solid var(--line);text-align:center"><strong style="font-size:14px">Saldo total dos meses exibidos</strong><strong style="font-size:20px;color:${totalBalance>=0?'var(--green)':'var(--red)'}">${totalBalance<0?'− ':'+'}${money(Math.abs(totalBalance))}</strong></div>`:'';
+ $('chart').insertAdjacentHTML('beforeend',totalRow);
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
 function closeFinanceMonth(){
