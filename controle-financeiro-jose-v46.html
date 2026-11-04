@@ -155,15 +155,21 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div id="cloudGate">
  <div class="cloud-box">
   <div class="eyebrow">CONTROLE FINANCEIRO</div>
-  <h2>Entrar para sincronizar</h2>
-  <p>Use o e-mail e a senha cadastrados no Supabase. Depois de entrar, os dados serão sincronizados entre celular e computador.</p>
-  <form id="cloudLoginForm">
-   <label for="cloudEmail">E-mail</label><input id="cloudEmail" type="email" autocomplete="username" required>
-   <label for="cloudPassword">Senha</label><input id="cloudPassword" type="password" autocomplete="current-password" required>
-   <button id="cloudLoginBtn" type="submit">Entrar e sincronizar</button>
-  </form>
-  <div id="cloudStatus" role="status" aria-live="polite"></div>
-  <p style="font-size:11px">Os dados locais são mantidos neste navegador. No primeiro acesso, abra primeiro pelo celular, onde estão seus dados mais completos.</p>
+  <h2>Sincronizar PC e celular</h2>
+  <p><b>No computador atualizado:</b> gere um código. Este computador será a fonte inicial dos dados.</p>
+  <button id="createPairBtn" type="button">Preparar este PC e gerar código</button>
+  <div id="pairCodeBox" style="display:none;margin:12px 0;padding:14px;text-align:center;border:1px solid #39d6a0;border-radius:12px">
+   <div style="font-size:12px;color:#b9c7d8">CÓDIGO DE PAREAMENTO · válido por 10 minutos</div>
+   <div id="pairCodeValue" style="font-size:30px;font-weight:900;letter-spacing:4px;color:#39d6a0;margin:8px 0"></div>
+   <div style="font-size:11px;color:#b9c7d8">No celular, digite este código em “Conectar outro aparelho”.</div>
+  </div>
+  <hr style="border:0;border-top:1px solid #344860;margin:18px 0">
+  <p><b>No celular:</b> informe o código gerado no computador.</p>
+  <label for="pairCodeInput">Código de pareamento</label>
+  <input id="pairCodeInput" inputmode="text" autocomplete="off" maxlength="10" placeholder="10 caracteres">
+  <button id="joinPairBtn" type="button" class="secondary">Conectar este celular</button>
+  <div id="cloudStatus" role="status" aria-live="polite" style="margin-top:12px"></div>
+  <button id="closeCloudGate" type="button" class="secondary">Fechar</button>
  </div>
 </div>
 <div class="app">
@@ -304,17 +310,10 @@ state.month=currentMonthKey;
 (state.incomes||[]).forEach(x=>{if(x.status==='Previsto')x.status='A receber';});
 (state.expenses||[]).forEach(x=>{if(x.status==='Previsto')x.status='A pagar';});
 let cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncQueue=Promise.resolve();
+let deviceSyncReady=false, deviceSyncRevision=0, deviceSyncBusy=false, deviceSyncConflict=false;
 function save(){
  localStorage.setItem('finjose_v2',JSON.stringify(state));render();
- if(cloudReady && cloudClient && cloudUser){
-  const snapshot=JSON.parse(JSON.stringify(state));
-  const userId=cloudUser.id;
-  cloudSyncQueue=cloudSyncQueue.then(async()=>{
-   const {error}=await cloudClient.from('financeiro_jose_state').upsert({user_id:userId,state:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-   if(error)throw error;
-   cloudMessage('Alterações salvas e sincronizadas com a nuvem.');
-  }).catch(error=>{console.error('Falha ao sincronizar alterações:',error);cloudMessage('Salvo neste aparelho; falha ao enviar para a nuvem: '+(error.message||'erro desconhecido'));});
- }
+ if(deviceSyncReady) queueDevicePush();
 }
 
 function isCardExpense(x){let cardNames=['SICREDI - 03','Inter - 07','Nubank','Amazon (Bradesco) - 05','Mercado Pago'];return x.category==='card'||cardNames.some(n=>String(x.name).toLowerCase().startsWith(n.toLowerCase()))}
@@ -580,104 +579,27 @@ if($('captureShareBtn'))$('captureShareBtn').addEventListener('click',()=>{
 <script>
 const FIN_SUPABASE_URL='https://zxdnyadoouqfmfptypae.supabase.co';
 const FIN_SUPABASE_KEY='sb_publishable_gz5e_tvJCK4SRx_qRsB0mw_i68TjbsS';
-const cloudGate=document.getElementById('cloudGate'), cloudStatus=document.getElementById('cloudStatus'), cloudLoginForm=document.getElementById('cloudLoginForm');
-function cloudMessage(msg){const el=document.getElementById('cloudStatus');if(el){el.textContent=String(msg??'');}else{console.warn('Status de sincronização:',msg)}}
-async function startCloudSession(session){
- cloudUser=session.user;
- cloudMessage('Verificando os dados salvos na nuvem…');
- const {data:remote,error}=await cloudClient.from('financeiro_jose_state').select('state,updated_at').eq('user_id',cloudUser.id).maybeSingle();
- if(error)throw error;
- const localRaw=localStorage.getItem('finjose_v2');
- if(!remote){
-  cloudMessage('Primeiro acesso: enviando os dados deste aparelho para a nuvem…');
-  const {error:upErr}=await cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  if(upErr)throw upErr;
- }else{
-  if(!remote.state || !Array.isArray(remote.state.incomes) || !Array.isArray(remote.state.expenses))throw new Error('Os dados na nuvem não têm o formato esperado. Os dados locais foram mantidos.');
-  if(localRaw){
-   localStorage.setItem('finjose_v2_before_cloud_'+cloudUser.id,localRaw);
-   const useLocal=confirm('Há dados salvos neste aparelho e também na nuvem.\\n\\nOK = ENVIAR os dados deste aparelho para a nuvem.\\nCancelar = BAIXAR os dados da nuvem para este aparelho.\\n\\nNo computador que contém os ajustes mais recentes, escolha OK. No celular, depois, escolha Cancelar.');
-   if(useLocal){
-    const {error:upErr}=await cloudClient.from('financeiro_jose_state').upsert({user_id:cloudUser.id,state:state,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-    if(upErr)throw upErr;
-   }else{
-    state=remote.state;if(!state.history)state.history={};
-    localStorage.setItem('finjose_v2',JSON.stringify(state));render();
-   }
-  }else{
-   state=remote.state;if(!state.history)state.history={};
-   localStorage.setItem('finjose_v2',JSON.stringify(state));render();
-  }
- }
- cloudReady=true;cloudGate.style.display='none';
- const banner=document.getElementById('cloudSyncBanner');if(banner)banner.style.display='none';
- cloudMessage('Sincronização ativada.');
-}
-async function ensureSupabaseLibrary(){
- if(window.supabase && window.supabase.createClient)return;
- const sources=[
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://unpkg.com/@supabase/supabase-js@2'
- ];
- let lastError=null;
- for(const src of sources){
-  try{
-   await new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src=src;script.async=true;
-    script.onload=()=>window.supabase&&window.supabase.createClient?resolve():reject(new Error('A biblioteca carregou sem disponibilizar o cliente Supabase.'));
-    script.onerror=()=>reject(new Error('Falha ao carregar '+src));
-    document.head.appendChild(script);
-   });
-   return;
-  }catch(err){lastError=err;console.warn('Falha ao carregar biblioteca Supabase:',src,err);}
- }
- throw new Error('Não foi possível carregar a biblioteca Supabase por dois servidores. Verifique bloqueadores de conteúdo ou a rede. Detalhe: '+(lastError?.message||'falha desconhecida'));
-}
-function showCloudSyncProblem(message){
- const banner=document.getElementById('cloudSyncBanner'),label=document.getElementById('cloudSyncBannerText');
- if(label)label.textContent=message;if(banner)banner.style.display='flex';
-}
-let cloudLoginBound=false;
-function bindCloudLogin(){
- if(cloudLoginBound||!cloudLoginForm)return;cloudLoginBound=true;
- cloudLoginForm.addEventListener('submit',async e=>{
-  e.preventDefault();const btn=$('cloudLoginBtn');btn.disabled=true;btn.textContent='Conectando…';cloudMessage('Entrando na sua conta…');
-  try{
-   const {data:login,error:loginError}=await cloudClient.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
-   if(loginError)throw loginError;await startCloudSession(login.session);
-  }catch(err){console.error('Falha no login Supabase:',err);cloudMessage('Não foi possível entrar: '+(err.message||'confira e-mail e senha')+'. Os dados locais foram mantidos.');}
-  finally{btn.disabled=false;btn.textContent='Entrar e sincronizar';}
- });
-}
-let cloudReconnectBusy=false;
-async function reconnectCloud(){
- if(cloudReconnectBusy||cloudReady)return;
- cloudReconnectBusy=true;
- let stage='carregamento da biblioteca Supabase';
- try{
-  await ensureSupabaseLibrary();stage='criação do cliente Supabase';
-  if(!cloudClient)cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-  bindCloudLogin();stage='recuperação da sessão salva (auth.getSession)';
-  const {data,error}=await cloudClient.auth.getSession();if(error)throw error;
-  if(data.session){stage='sincronização dos dados';await startCloudSession(data.session);}
-  else{cloudGate.style.display='flex';showCloudSyncProblem('Entre na sua conta para ativar a sincronização. Seus dados locais estão preservados.');}
- }catch(e){
-  console.error('Falha na etapa de inicialização Supabase:',stage,e);cloudReady=false;
-  const message='Sincronização indisponível — '+stage+': '+(e.message||'erro desconhecido')+'. Seus dados locais estão preservados.';
-  cloudMessage(message);showCloudSyncProblem(message);
- }finally{cloudReconnectBusy=false;}
-}
+const FIN_SYNC_URL=FIN_SUPABASE_URL+'/functions/v1/financeiro-device-sync';
+const cloudGate=document.getElementById('cloudGate');
+const cloudStatus=document.getElementById('cloudStatus');
+function cloudMessage(msg){if(cloudStatus)cloudStatus.textContent=String(msg||'');}
+function showCloudSyncProblem(msg){const b=document.getElementById('cloudSyncBanner');const t=document.getElementById('cloudSyncBannerText');if(t)t.textContent=msg;if(b)b.style.display='flex';}
+function syncToken(){return localStorage.getItem('finjose_sync_device_token')||'';}
+async function syncApi(body,token){const h={'Content-Type':'application/json','apikey':FIN_SUPABASE_KEY};if(token)h['x-device-token']=token;const res=await fetch(FIN_SYNC_URL,{method:'POST',headers:h,body:JSON.stringify(body)});const data=await res.json().catch(()=>({error:'Resposta inválida do servidor.'}));if(!res.ok){const err=new Error(data.error||'Falha na sincronização');err.status=res.status;throw err;}return data;}
+function setSyncReady(revision){deviceSyncRevision=Number(revision)||0;deviceSyncReady=true;deviceSyncConflict=false;cloudGate.style.display='none';const b=document.getElementById('cloudSyncBanner');if(b)b.style.display='none';cloudMessage('Dispositivo conectado. Sincronização automática ativada.');}
+async function pullDeviceState(){const data=await syncApi({op:'pull'},syncToken());if(data.state&&data.revision>deviceSyncRevision){if(deviceSyncBusy){deviceSyncConflict=true;showCloudSyncProblem('Alterações simultâneas detectadas. Sincronização pausada para evitar perda de dados.');return;}state=data.state;if(!state.history)state.history={};localStorage.setItem('finjose_v2',JSON.stringify(state));render();deviceSyncRevision=data.revision;cloudMessage('Dados atualizados recebidos da nuvem.');}return data;}
+async function queueDevicePush(){if(!deviceSyncReady||deviceSyncConflict)return;const snapshot=JSON.parse(JSON.stringify(state));cloudSyncQueue=cloudSyncQueue.then(async()=>{if(!deviceSyncReady||deviceSyncConflict)return;deviceSyncBusy=true;try{const out=await syncApi({op:'push',state:snapshot,expected_revision:deviceSyncRevision},syncToken());deviceSyncRevision=out.revision;cloudMessage('Alterações salvas e sincronizadas.');}catch(err){if(err.status===409){deviceSyncConflict=true;showCloudSyncProblem('Conflito: o outro aparelho alterou os dados. Sincronização pausada para evitar sobrescrita.');}else{showCloudSyncProblem('Salvo neste aparelho; falha na nuvem: '+err.message);}}finally{deviceSyncBusy=false;}});return cloudSyncQueue;}
+async function createPair(){const btn=document.getElementById('createPairBtn');btn.disabled=true;try{const out=await syncApi({op:'create_pair'});localStorage.setItem('finjose_sync_device_token',out.token);deviceSyncReady=true;deviceSyncRevision=0;await queueDevicePush();document.getElementById('pairCodeValue').textContent=out.code;document.getElementById('pairCodeBox').style.display='block';cloudMessage('Código criado. Mantenha esta tela aberta e conecte o celular.');}catch(err){cloudMessage('Erro ao preparar o computador: '+err.message);}finally{btn.disabled=false;}}
+async function joinPair(){const btn=document.getElementById('joinPairBtn');btn.disabled=true;try{const code=document.getElementById('pairCodeInput').value.trim().toUpperCase();const out=await syncApi({op:'join_pair',code:code});localStorage.setItem('finjose_sync_device_token',out.token);deviceSyncReady=true;deviceSyncRevision=0;const snap=await pullDeviceState();if(snap.state){setSyncReady(snap.revision);cloudMessage('Celular conectado e dados recebidos do computador.');}else{deviceSyncReady=false;cloudMessage('Pareamento feito; aguardando a primeira cópia do computador.');}}catch(err){cloudMessage('Erro ao conectar celular: '+err.message);}finally{btn.disabled=false;}}
+async function reconnectCloud(){const token=syncToken();if(!token){cloudGate.style.display='flex';cloudMessage('No PC, gere um código. No celular, use o código do PC.');return;}try{const snap=await syncApi({op:'pull'},token);if(snap.state){setSyncReady(snap.revision);await pullDeviceState();}else{deviceSyncReady=true;deviceSyncRevision=0;cloudMessage('Dispositivo autorizado; aguardando dados iniciais.');}}catch(err){deviceSyncReady=false;showCloudSyncProblem('Sincronização indisponível: '+err.message);}}
+document.getElementById('createPairBtn').addEventListener('click',createPair);
+document.getElementById('joinPairBtn').addEventListener('click',joinPair);
+document.getElementById('closeCloudGate').addEventListener('click',()=>cloudGate.style.display='none');
 document.getElementById('cloudReconnectBtn').addEventListener('click',reconnectCloud);
-document.getElementById('cloudManualLoginBtn').addEventListener('click',async()=>{
- try{
-  await ensureSupabaseLibrary();
-  if(!cloudClient)cloudClient=window.supabase.createClient(FIN_SUPABASE_URL,FIN_SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-  bindCloudLogin();cloudGate.style.display='flex';
- }catch(e){showCloudSyncProblem('Não foi possível preparar o login: '+(e.message||'erro desconhecido'));}
-});
-window.addEventListener('online',()=>{if(!cloudReady)reconnectCloud();});
+const manual=document.getElementById('cloudManualLoginBtn');if(manual)manual.addEventListener('click',()=>cloudGate.style.display='flex');
+window.addEventListener('online',reconnectCloud);
 reconnectCloud();
+setInterval(()=>{if(deviceSyncReady&&!deviceSyncConflict&&!deviceSyncBusy)pullDeviceState().catch(err=>showCloudSyncProblem('Falha ao receber atualização: '+err.message));},5000);
 </script>
 </body></html>
 
