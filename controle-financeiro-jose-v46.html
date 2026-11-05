@@ -294,7 +294,7 @@ function renderChart(){
   const income=(isCurrent?(state.incomes||[]):(record.incomeItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.income||0));
   const expenses=(isCurrent?(state.expenses||[]):(record.expenseItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.expenses||0));
   const [y,m]=key.split('-').map(Number),label=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-  return {key,label,year:y,income,expenses,balance:income-expenses,isCurrent};
+  const accountBalance=isCurrent?(+state.accountBalance||0):0;return {key,label,year:y,income,expenses,balance:income-expenses+accountBalance,isCurrent};
  }).filter(m=>m.income>0||m.expenses>0);
  $('chart').innerHTML=months.length?months.map(m=>{
   const positive=m.balance>=0,max=Math.max(1,m.income,m.expenses);
@@ -306,7 +306,7 @@ function renderChart(){
   </div>`;
  }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
  const total=months.reduce((sum,m)=>sum+m.balance,0);
- if(months.length)$('chart').insertAdjacentHTML('beforeend',`<div style="display:flex;justify-content:center;gap:18px;margin:18px 0 6px;padding:14px 10px;border-top:1px solid var(--line);text-align:center"><strong>Saldo total dos meses exibidos</strong><strong style="font-size:20px;color:${total>=0?'var(--green)':'var(--red)'}">${total<0?'− ':'+'}${money(Math.abs(total))}</strong></div>`);
+ if(months.length)$('chart').insertAdjacentHTML('beforeend',`<div style="display:flex;justify-content:center;gap:18px;margin:18px 0 6px;padding:14px 10px;border-top:1px solid var(--line);text-align:center"><strong>Saldo total dos meses exibidos (inclui saldo em conta)</strong><strong style="font-size:20px;color:${total>=0?'var(--green)':'var(--red)'}">${total<0?'− ':'+'}${money(Math.abs(total))}</strong></div>`);
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
 function closeFinanceMonth(){
