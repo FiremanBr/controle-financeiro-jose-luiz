@@ -287,7 +287,7 @@ function renderChart(){
  const current=state.month||monthNow();
  const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=current);
  if(!keys.includes(current))keys.push(current);
- keys.sort();
+ keys.sort().reverse();
  const months=keys.map(key=>{
   const isCurrent=key===current,record=hist[key]||{};
   const income=(isCurrent?(state.incomes||[]):(record.incomeItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.income||0));
