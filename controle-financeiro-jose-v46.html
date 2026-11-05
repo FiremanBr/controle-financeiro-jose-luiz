@@ -148,7 +148,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 <div class="card"><div class="metric-label">Limite mensal definido</div><input class="metric-edit" id="cardLimitMetric" aria-label="Editar teto mensal" type="text" inputmode="decimal" value="7.500,00"></div>
 <div class="card"><div class="metric-label">Disponível até a virada</div><div class="metric positive metric-locked" id="cardAvailableMetric" aria-label="Valor disponível calculado">R$ 1.500,00</div></div></div>
 <div class="progress" style="height:12px;margin:18px 0"><span id="cardProgress" style="width:80%"></span></div>
-<button class="submit" id="saveCard">Atualizar controle do cartão</button>
+
 <div style="height:14px"></div><h2>Limite para as próximas quartas-feiras</h2>
 <div id="wednesdayPlan"></div>
 
@@ -335,7 +335,7 @@ $('accountBalanceInput').addEventListener('change',saveAccountBalance);
 $('accountBalanceInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveAccountBalance();e.target.blur();}});
 $('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;
 function addCardExpense(){let name=prompt('Nome do cartão (ex.: Cartão novo):');if(!name||!name.trim())return;let raw=prompt('Valor da despesa prevista em R$:','0,00');if(raw===null)return;let amount=Number(raw.trim().replace(/\./g,'').replace(',','.'));if(!Number.isFinite(amount)||amount<0){alert('Informe um valor válido.');return}state.expenses.push({id:crypto.randomUUID(),name:name.trim(),amount,status:'A pagar',category:'card'});save()}
-$('saveCard').onclick=()=>{state.card={...state.card,spent:Math.max(0,parseBR($('cardSpentMetric').value)),limit:Math.max(0,parseBR($('cardLimitMetric').value))};save()};$('cardSpentMetric').addEventListener('change',()=>{$('saveCard').click()});$('cardLimitMetric').addEventListener('change',()=>{$('saveCard').click()});
+const saveCardControl=()=>{state.card={...state.card,spent:Math.max(0,parseBR($('cardSpentMetric').value)),limit:Math.max(0,parseBR($('cardLimitMetric').value))};save()};$('cardSpentMetric').addEventListener('change',saveCardControl);$('cardLimitMetric').addEventListener('change',saveCardControl);
 $('installmentForm').onsubmit=e=>{e.preventDefault();let current=+$('instCurrent').value,total=+$('instTotal').value;if(current>total){alert('A parcela atual não pode ser maior que o total.');return}state.installments.push({id:crypto.randomUUID(),name:$('instDesc').value.trim(),card:$('instCard').value,amount:+$('instAmount').value,current,total});e.target.reset();$('instCurrent').value=1;$('instTotal').value=1;save()};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>{x.classList.toggle('active',x===b);x.classList.toggle('secondary',x!==b)});document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab))});
 $('exportBtn').onclick=()=>download('backup-financas-jose.json',JSON.stringify(state,null,2),'application/json');$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.incomes)||!Array.isArray(d.expenses))throw Error();state=d;save();alert('Backup importado com sucesso.')}catch{alert('Arquivo inválido ou incompatível.')}e.target.value=''};
