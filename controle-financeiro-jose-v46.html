@@ -123,7 +123,7 @@ button.cards-tab{background:var(--yellow)!important;color:#342708!important;bord
 </head>
 <body><div class="app">
 <header class="top"><div class="brand"><div class="logo">R$</div><div><h1>Controle Financeiro José Luiz</h1></div></div></header>
-<div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span></div>
+<div class="period"><span class="sub">Período do painel</span><select id="monthFilter"></select><span class="pill" id="selectedMonthLabel">Outubro</span><button id="closeFinanceMonthBtn" type="button" class="secondary" style="width:auto;margin:0;padding:9px 12px">Fechar mês e iniciar próximo</button></div>
 <section class="cards">
 <div class="card"><div class="metric-label">Receitas a receber</div><div class="metric positive" id="receivableMetric">R$ 0,00</div><div class="metric-note">Entradas com situação “A receber”</div></div>
 <div class="card"><div class="metric-label">Receitas recebidas</div><div class="metric positive" id="incomeMetric">R$ 0,00</div><div class="metric-note">Entradas confirmadas no período</div></div>
@@ -280,28 +280,50 @@ function initMonths(){
  $('selectedMonthLabel').textContent=sel.options[sel.selectedIndex]?.text||'';
 }
 function renderChart(){
- if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+new Date().getFullYear();
+ const year=String(new Date().getFullYear());
+ if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const isCurrent=selected===monthNow();
- const income=isCurrent?state.incomes.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.income||0);
- const expenses=isCurrent?state.expenses.reduce((sum,x)=>sum+(+x.amount||0),0):(hist[selected]?.expenses||0);
- const balance=income-expenses;
- const [year,month]=selected.split('-').map(Number);
- const label=new Date(year,month-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
- const max=Math.max(1,income,expenses);
- const months=(income>0||expenses>0)?[{label,month:month-1,income,expenses,balance}]:[];
+ const current=state.month||monthNow();
+ const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=current);
+ if(!keys.includes(current))keys.push(current);
+ keys.sort();
+ const months=keys.map(key=>{
+  const isCurrent=key===current,record=hist[key]||{};
+  const income=(isCurrent?(state.incomes||[]):(record.incomeItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.income||0));
+  const expenses=(isCurrent?(state.expenses||[]):(record.expenseItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.expenses||0));
+  const [y,m]=key.split('-').map(Number),label=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+  return {key,label,year:y,income,expenses,balance:income-expenses,isCurrent};
+ }).filter(m=>m.income>0||m.expenses>0);
  $('chart').innerHTML=months.length?months.map(m=>{
-   const positive=m.balance>=0;
-   return `<div class="month-row" title="${label}/${year}">
-     <div class="month-row-head"><strong>${label.charAt(0).toUpperCase()+label.slice(1)} ${year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
-     <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="Entradas: ${money(m.income)}"></span></div>
-     <div class="month-track"><span class="month-bar expense-bar" style="width:${m.expenses>0?m.expenses/max*100:0}%" title="Saídas: ${money(m.expenses)}"></span></div>
-     <div class="month-values"><span>Entrou: ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
-   </div>`;
- }).join(''):'<div class="empty-chart">Ainda não há movimentação para este mês.</div>';
+  const positive=m.balance>=0,max=Math.max(1,m.income,m.expenses);
+  return `<div class="month-row" data-month="${m.key}" title="${m.label}/${m.year}" style="${m.key===selected?'border:1px solid var(--green);border-radius:10px;padding:9px;background:rgba(57,214,160,.05)':''}">
+   <div class="month-row-head"><strong>${m.label.charAt(0).toUpperCase()+m.label.slice(1)} ${m.year}</strong><span class="month-total ${positive?'monthly-positive':'monthly-negative'}">${positive?'+':'−'} ${money(Math.abs(m.balance))}</span></div>
+   <div class="month-track"><span class="month-bar income-bar" style="width:${m.income>0?m.income/max*100:0}%" title="Entradas: ${money(m.income)}"></span></div>
+   <div class="month-track"><span class="month-bar expense-bar" style="width:${m.expenses>0?m.expenses/max*100:0}%" title="Saídas: ${money(m.expenses)}"></span></div>
+   <div class="month-values"><span>Entrou: ${money(m.income)}</span><span>Saiu: ${money(m.expenses)}</span></div>
+  </div>`;
+ }).join(''):'<div class="empty-chart">Ainda não há movimentação registrada neste ano.</div>';
+ const total=months.reduce((sum,m)=>sum+m.balance,0);
+ if(months.length)$('chart').insertAdjacentHTML('beforeend',`<div style="display:flex;justify-content:center;gap:18px;margin:18px 0 6px;padding:14px 10px;border-top:1px solid var(--line);text-align:center"><strong>Saldo total dos meses exibidos</strong><strong style="font-size:20px;color:${total>=0?'var(--green)':'var(--red)'}">${total<0?'− ':'+'}${money(Math.abs(total))}</strong></div>`);
  if($('selectedMonthLabel'))$('selectedMonthLabel').textContent=$('monthFilter').options[$('monthFilter').selectedIndex]?.text||'';
 }
+function closeFinanceMonth(){
+ const active=state.month||monthNow();
+ if(state.history&&state.history[active]){alert('Este período já possui fechamento registrado. Para evitar duplicidade, não foi alterado.');return;}
+ const income=(state.incomes||[]).reduce((s,x)=>s+(+x.amount||0),0);
+ const expenses=(state.expenses||[]).reduce((s,x)=>s+(+x.amount||0),0);
+ const next=(()=>{const [y,m]=active.split('-').map(Number);return `${m===12?y+1:y}-${String(m===12?1:m+1).padStart(2,'0')}`;})();
+ if(!confirm('Fechar a competência '+active.split('-').reverse().join('/')+' e iniciar '+next.split('-').reverse().join('/')+'?\n\nOs valores serão guardados no histórico. Receitas e despesas serão mantidas para o novo período, com status reiniciado.'))return;
+ state.history=state.history||{};
+ state.history[active]={income,expenses,balance:income-expenses,closedAt:today(),incomeItems:structuredClone(state.incomes||[]),expenseItems:structuredClone(state.expenses||[])};
+ state.incomes=(state.incomes||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A receber'}));
+ state.expenses=(state.expenses||[]).map(x=>({...x,id:crypto.randomUUID(),status:'A pagar'}));
+ state.month=next;state.lastClosedMonth=active;
+ save();initMonths();render();
+ alert('Competência encerrada. O novo período '+next.split('-').reverse().join('/')+' está pronto.');
+}
+$('closeFinanceMonthBtn').addEventListener('click',closeFinanceMonth);
 function render(){renderPlans('incomes');renderPlans('expenses');renderCard();renderInstallments();renderChart();let got=state.incomes.filter(x=>x.status==='Recebido').reduce((s,x)=>s+(+x.amount||0),0),receivable=state.incomes.filter(x=>x.status==='A receber').reduce((s,x)=>s+(+x.amount||0),0);let paid=state.expenses.filter(x=>x.status==='Pago').reduce((s,x)=>s+(+x.amount||0),0),fixedExpenses=state.expenses.filter(x=>!isCardExpense(x)).reduce((s,x)=>s+(+x.amount||0),0),cardExpenses=state.expenses.filter(isCardExpense).reduce((s,x)=>s+(+x.amount||0),0),totalExpenses=fixedExpenses+cardExpenses;$('receivableMetric').textContent=money(receivable);$('incomeMetric').textContent=money(got);$('fixedExpensesMetric').textContent=money(fixedExpenses);$('cardExpensesMetric').textContent=money(cardExpenses);$('totalExpensesMetric').textContent=money(totalExpenses);$('balanceMetric').textContent=money(got-paid);$('balanceIncomeDetail').textContent=money(got);$('balanceExpenseDetail').textContent=money(paid);$('balanceMetric').classList.toggle('negative',got-paid<0);$('balanceMetric').className='metric '+(got>=paid?'positive':'negative');$('openMetric').textContent=money(state.incomes.filter(x=>x.status==='A receber'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0)+state.expenses.filter(x=>x.status==='A pagar'||x.status==='Previsto').reduce((s,x)=>s+(+x.amount||0),0))}
 $('addIncomeBtn').onclick=()=>addPlan('incomes');$('addExpenseBtn').onclick=()=>addPlan('expenses');$('addCardExpenseBtn').onclick=addCardExpense;
 function addCardExpense(){let name=prompt('Nome do cartão (ex.: Cartão novo):');if(!name||!name.trim())return;let raw=prompt('Valor da despesa prevista em R$:','0,00');if(raw===null)return;let amount=Number(raw.trim().replace(/\./g,'').replace(',','.'));if(!Number.isFinite(amount)||amount<0){alert('Informe um valor válido.');return}state.expenses.push({id:crypto.randomUUID(),name:name.trim(),amount,status:'A pagar',category:'card'});save()}
