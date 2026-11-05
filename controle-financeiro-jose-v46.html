@@ -285,7 +285,7 @@ function renderChart(){
  if($('yearMovementTitle'))$('yearMovementTitle').textContent='Movimentação '+year;
  const selected=$('monthFilter').value||monthNow();
  const hist=state.history||{};
- const current=state.month||monthNow();
+ const current=monthNow();
  const keys=Object.keys(hist).filter(k=>k.startsWith(year+'-')&&k<=current);
  if(!keys.includes(current))keys.push(current);
  keys.sort().reverse();
@@ -294,7 +294,7 @@ function renderChart(){
   const income=(isCurrent?(state.incomes||[]):(record.incomeItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.income||0));
   const expenses=(isCurrent?(state.expenses||[]):(record.expenseItems||[])).reduce((sum,x)=>sum+(+x.amount||0),0) || (isCurrent?0:(+record.expenses||0));
   const [y,m]=key.split('-').map(Number),label=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-  const accountBalance=isCurrent?(+state.accountBalance||0):0;return {key,label,year:y,income,expenses,balance:income-expenses+accountBalance,isCurrent};
+  const accountBalance=key===monthNow()?(+state.accountBalance||0):0;return {key,label,year:y,income,expenses,balance:income-expenses+accountBalance,isCurrent:key===monthNow()};
  }).filter(m=>m.income>0||m.expenses>0);
  $('chart').innerHTML=months.length?months.map(m=>{
   const positive=m.balance>=0,max=Math.max(1,m.income,m.expenses);
